@@ -54,7 +54,7 @@ Keyword get_keyword(const char* attribute){
 }
 
 int string_token_to_int(Token *token){
-    int value = atoi(token->attribute.string);
+    int64_t value = atol(token->attribute.string);
     free(token->attribute.string);
     token->attribute.integer = value;
     return 0;
@@ -100,7 +100,7 @@ int next_token(Token* token){
                     token->token_type = TT_PLUS;
                     free(line);
                     return 1;
-                }else if(ch >= '0' && ch <= '9'){
+                }else if(ch > '0' && ch <= '9'){
                     line[i] = ch;
                     state = SCANSTATE_NUMBER;
                 } else if (isspace(ch)){

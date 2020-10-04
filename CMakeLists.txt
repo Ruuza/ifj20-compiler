@@ -10,6 +10,7 @@ add_subdirectory(src)
 
 add_executable(${PROJECT_NAME}
         apps/main.c
-        src/scanner.c)
+        src/scanner.c
+        src/token.c)
 target_include_directories(${PROJECT_NAME} PUBLIC include/libifj20c)
 target_link_libraries(${PROJECT_NAME} PUBLIC libifj20c)
