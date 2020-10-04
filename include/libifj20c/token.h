@@ -4,20 +4,38 @@
 typedef enum {
     TT_ERR,
     TT_IDENTIFIER,
-    TT_ELSE,
-    TT_FLOAT64,
-    TT_FOR,
-    TT_FUNC,
-    TT_IF,
-    TT_INT,
-    TT_RETURN,
+    TT_KEYWORD,
     TT_STRING,
-    TT_EOF
+    TT_EOF,
+    TT_INTEGER_LITERAL,
+    TT_FLOATING_LITERAL,
+    TT_PLUS,
+    TT_MINUS,
 } Token_type;
+
+typedef enum{
+    KEYWORD_NOT_A_KEYWORD,
+    KEYWORD_ELSE,
+    KEYWORD_FLOAT64,
+    KEYWORD_FOR,
+    KEYWORD_FUNC,
+    KEYWORD_IF,
+    KEYWORD_INT,
+    KEYWORD_RETURN,
+    KEYWORD_STRING
+} Keyword;
+
+
+union Token_attribute{
+    char* string;
+    int integer;
+    double floating;
+    Keyword keyword;
+};
 
 struct {
     Token_type token_type;
-    char* attribute;
+    union Token_attribute attribute;
 } typedef Token;
 
 

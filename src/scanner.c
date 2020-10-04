@@ -18,35 +18,53 @@ enum Scan_state{
     SCANSTATE_ERR,
     SCANSTATE_START,
     SCANSTATE_IDENTIFIER,
+    SCANSTATE_NUMBER,
+    SCANSTATE_FLOAT_PRE_EXPONENT,
+    SCANSTATE_FLOAT_EXPONENT,
+    SCANSTATE_FLOAT,
 };
 
-Token_type get_keyword_type(const char* attribute){
+Keyword get_keyword(const char* attribute){
     //else, float64, for, func, if, int, return, string
     if (strcmp(attribute, "else") == 0){
-        return TT_ELSE;
+        return KEYWORD_ELSE;
     }
     if (strcmp(attribute, "float64") == 0){
-        return TT_FLOAT64;
+        return KEYWORD_FLOAT64;
     }
     if (strcmp(attribute, "for") == 0){
-        return TT_FOR;
+        return KEYWORD_FOR;
     }
     if (strcmp(attribute, "func") == 0){
-        return TT_FUNC;
+        return KEYWORD_FUNC;
     }
     if (strcmp(attribute, "if") == 0){
-        return TT_IF;
+        return KEYWORD_IF;
     }
     if (strcmp(attribute, "int") == 0){
-        return TT_INT;
+        return KEYWORD_INT;
     }
     if (strcmp(attribute, "return") == 0){
-        return TT_RETURN;
+        return KEYWORD_RETURN;
     }
     if (strcmp(attribute, "string") == 0){
-        return TT_STRING;
+        return KEYWORD_STRING;
     }
-    return TT_IDENTIFIER;
+    return KEYWORD_NOT_A_KEYWORD;
+}
+
+int string_token_to_int(Token *token){
+    int value = atoi(token->attribute.string);
+    free(token->attribute.string);
+    token->attribute.integer = value;
+    return 0;
+}
+
+int string_token_to_double(Token *token){
+    double value = atof(token->attribute.string);
+    free(token->attribute.string);
+    token->attribute.floating = value;
+    return 0;
 }
 
 int next_token(Token* token){
@@ -65,16 +83,26 @@ int next_token(Token* token){
             size = (int)(size * 1.5);
             line = realloc(line, size*sizeof(char));
         }
-        line[i] = ch;
 
         switch (state) {
             case SCANSTATE_ERR:
                 break;
             case SCANSTATE_START:
-                if (isalpha(ch) || ch == '_'){
+                if (isalpha(ch) || ch == '_') {
                     line[i] = ch;
                     state = SCANSTATE_IDENTIFIER;
                     break;
+                }else if(ch == '-'){
+                    token->token_type = TT_MINUS;
+                    free(line);
+                    return 1;
+                }else if(ch == '+'){
+                    token->token_type = TT_PLUS;
+                    free(line);
+                    return 1;
+                }else if(ch >= '0' && ch <= '9'){
+                    line[i] = ch;
+                    state = SCANSTATE_NUMBER;
                 } else if (isspace(ch)){
                     i--;
                     break;
@@ -82,6 +110,11 @@ int next_token(Token* token){
                     line[i] = 0;
                     token->token_type = TT_EOF;
                     return 0;
+                } else {
+                    line[i] = 0;
+                    token->token_type = TT_ERR;
+                    token->attribute.string = line;
+                    return 1;
                 }
                 break;
             case SCANSTATE_IDENTIFIER:
@@ -91,11 +124,69 @@ int next_token(Token* token){
                 } else {
                     line[i] = 0;
                     ungetc(ch, inputFile);
-                    token->token_type = get_keyword_type(line);
-                    token->attribute = line;
+                    if (get_keyword(line) == KEYWORD_NOT_A_KEYWORD){
+                        token->token_type = TT_IDENTIFIER;
+                        token->attribute.string = line;
+                    } else {
+                        token->token_type = TT_KEYWORD;
+                        token->attribute.keyword = get_keyword(line);
+                    }
                     return 1;
                 }
-        break;
+                break;
+            case SCANSTATE_NUMBER:
+                if (isdigit(ch)){
+                    line[i] = ch;
+                } else if(ch == '.') {
+                    line[i] = ch;
+                    state = SCANSTATE_FLOAT_PRE_EXPONENT;
+                } else if(tolower(ch) == 'e') {
+                    line[i] = ch;
+                    state = SCANSTATE_FLOAT_EXPONENT;
+                } else {
+                    line[i] = 0;
+                    ungetc(ch, inputFile);
+                    token->token_type = TT_INTEGER_LITERAL;
+                    token->attribute.string = line;
+                    string_token_to_int(token);
+                    return 1;
+                }
+                break;
+            case SCANSTATE_FLOAT_PRE_EXPONENT:
+                if (isdigit(ch)) {
+                    line[i] = ch;
+                } else if (tolower(ch) == 'e'){
+                    line[i] = ch;
+                    state = SCANSTATE_FLOAT_EXPONENT;
+                } else{
+                    line[i] = 0;
+                    ungetc(ch, inputFile);
+                    token->token_type = TT_FLOATING_LITERAL;
+                    token->attribute.string = line;
+                    string_token_to_double(token);
+                    return 1;
+                }
+                break;
+            case SCANSTATE_FLOAT_EXPONENT:
+                line[i] = ch;
+                if (ch == '+' || ch == '-' || isdigit(ch)){
+                    state = SCANSTATE_FLOAT;
+                } else {
+                    state = SCANSTATE_ERR;
+                }
+                break;
+            case SCANSTATE_FLOAT:
+                if (isdigit(ch)){
+                    line[i] = ch;
+                } else {
+                    line[i] = 0;
+                    ungetc(ch, inputFile);
+                    token->token_type = TT_FLOATING_LITERAL;
+                    token->attribute.string = line;
+                    string_token_to_double(token);
+                    return 1;
+                }
+                break;
         }
     }
 }
