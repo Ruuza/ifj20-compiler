@@ -4,19 +4,47 @@
 #include <stdint.h>
 
 typedef enum {
-    TT_ERR,
+    // Meta tokens
+    TT_ERR, //! Lexical analysis failed!
+    TT_EOF,
+
     TT_IDENTIFIER,
     TT_KEYWORD,
     TT_STRING_LITERAl,
-    TT_EOF,
     TT_INTEGER_LITERAL,
     TT_FLOATING_LITERAL,
+
+    //Assigment
+    TT_ASSIGNMENT,
+    TT_DECLARATION_ASSIGNMENT,
+
+    //Math operators
     TT_PLUS,
     TT_MINUS,
+    TT_ASTERISK,
+    TT_SLASH,
+
+    //Separators
+    TT_COMMA,
+    TT_SEMICOLON,
+
+    //Comparison operators
+    TT_EQUALS,
+    TT_NOT_EQUALS,
+    TT_LESS_OR_EQUALS,
+    TT_GREATER_OR_EQUALS,
+    TT_LESS,
+    TT_GREATER,
+
+    //Brackets
+    TT_OPEN_PARENTHESES,
+    TT_CLOSE_PARENTHESES,
+    TT_OPEN_BRACES,
+    TT_CLOSE_BRACES,
 } Token_type;
 
 typedef enum{
-    KEYWORD_NOT_A_KEYWORD,
+    KEYWORD_NOT_A_KEYWORD, //! Something went wrong if token attribute has this value.
     KEYWORD_ELSE,
     KEYWORD_FLOAT64,
     KEYWORD_FOR,
