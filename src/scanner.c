@@ -111,6 +111,38 @@ int next_token(Token* token){
                     token->token_type = TT_PLUS;
                     free(line);
                     return 1;
+                }else if(ch == '*'){
+                    token->token_type = TT_ASTERISK;
+                    free(line);
+                    return 1;
+                }else if(ch == '/'){
+                    token->token_type = TT_SLASH;
+                    free(line);
+                    return 1;
+                }else if(ch == '('){
+                    token->token_type = TT_OPEN_PARENTHESES;
+                    free(line);
+                    return 1;
+                }else if(ch == ')'){
+                    token->token_type = TT_CLOSE_PARENTHESES;
+                    free(line);
+                    return 1;
+                }else if(ch == '{'){
+                    token->token_type = TT_OPEN_BRACES;
+                    free(line);
+                    return 1;
+                }else if(ch == '}'){
+                    token->token_type = TT_CLOSE_BRACES;
+                    free(line);
+                    return 1;
+                }else if(ch == ','){
+                    token->token_type = TT_COMMA;
+                    free(line);
+                    return 1;
+                }else if(ch == ';'){
+                    token->token_type = TT_SEMICOLON;
+                    free(line);
+                    return 1;
                 }else if(ch > '0' && ch <= '9'){
                     line[i] = ch;
                     state = SCANSTATE_NUMBER;
