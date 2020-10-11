@@ -9,11 +9,12 @@ typedef enum {
     TT_EOL,
     TT_EOF,
 
-    TT_IDENTIFIER,
-    TT_KEYWORD,
-    TT_STRING_LITERAl,
-    TT_INTEGER_LITERAL,
-    TT_FLOATING_LITERAL,
+    // Tokens with an attribute
+    TT_IDENTIFIER, //String
+    TT_KEYWORD, //Keyword
+    TT_STRING_LITERAl, //String
+    TT_INTEGER_LITERAL, //Int64
+    TT_FLOATING_LITERAL, //Double
 
     //Assigment
     TT_ASSIGNMENT,

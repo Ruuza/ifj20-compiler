@@ -44,5 +44,39 @@ char* to_string_attribute(const Token* token){
                 case KEYWORD_STRING:
                     return "string";
             }
+        case TT_EOL:
+            return "EOL";
+        case TT_ASSIGNMENT:
+            return "=";
+        case TT_DECLARATION_ASSIGNMENT:
+            return ":=";
+        case TT_ASTERISK:
+            return "*";
+        case TT_SLASH:
+            return "/";
+        case TT_COMMA:
+            return ",";
+        case TT_SEMICOLON:
+            return ";";
+        case TT_EQUALS:
+            return "==";
+        case TT_NOT_EQUALS:
+            return "!=";
+        case TT_LESS_OR_EQUALS:
+            return "<=";
+        case TT_GREATER_OR_EQUALS:
+            return ">=";
+        case TT_LESS:
+            return "<";
+        case TT_GREATER:
+            return ">";
+        case TT_OPEN_PARENTHESES:
+            return "(";
+        case TT_CLOSE_PARENTHESES:
+            return ")";
+        case TT_OPEN_BRACES:
+            return "{";
+        case TT_CLOSE_BRACES:
+            return "}";
     }
 }
