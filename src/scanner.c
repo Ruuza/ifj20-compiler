@@ -192,7 +192,7 @@ int next_token(Token* token){
                 }else if(ch == '"'){
                     i--;
                     state = SCANSTATE_STRING_LITERAL;
-                }else if(ch > '0' && ch <= '9'){
+                }else if(ch >= '0' && ch <= '9'){
                     line[i] = ch;
                     state = SCANSTATE_NUMBER;
                 }else if(ch == '\n'){
@@ -231,7 +231,13 @@ int next_token(Token* token){
                 }
                 break;
             case SCANSTATE_NUMBER:
+                // Number with redundant leading zeros are not allowed.
                 if (isdigit(ch)){
+                    if (line[0] == '0' && i == 1){
+                        token->token_type = TT_ERR;
+                        free(line);
+                        return 1;
+                    }
                     line[i] = ch;
                 } else if(ch == '.') {
                     line[i] = ch;
