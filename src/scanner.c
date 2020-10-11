@@ -19,6 +19,7 @@ enum Scan_state{
     SCANSTATE_START,
     SCANSTATE_IDENTIFIER,
     SCANSTATE_NUMBER,
+    SCANSTATE_STRING_LITERAL,
     SCANSTATE_FLOAT_PRE_EXPONENT,
     SCANSTATE_FLOAT_EXPONENT,
     SCANSTATE_FLOAT,
@@ -143,6 +144,9 @@ int next_token(Token* token){
                     token->token_type = TT_SEMICOLON;
                     free(line);
                     return 1;
+                }else if(ch == '"'){
+                    i--;
+                    state = SCANSTATE_STRING_LITERAL;
                 }else if(ch > '0' && ch <= '9'){
                     line[i] = ch;
                     state = SCANSTATE_NUMBER;
@@ -232,6 +236,52 @@ int next_token(Token* token){
                     token->attribute.string = line;
                     string_token_to_double(token);
                     return 1;
+                }
+                break;
+            case SCANSTATE_STRING_LITERAL:
+                if (ch == '"'){
+                    line[i] = 0;
+                    token->token_type = TT_STRING_LITERAl;
+                    token->attribute.string = line;
+                    return 1;
+                }
+                if (ch <= 31){
+                    token->token_type = TT_ERR;
+                    free(line);
+                    return 1;
+                }
+                line[i] = ch;
+                if (ch == '\\'){
+                    ch = (char)fgetc(inputFile);
+                    char hexNumber[3];
+                    switch(ch){
+                        case 'n':
+                            line[i] = '\n';
+                            break;
+                        case '\\':
+                            line[i] = '\\';
+                            break;
+                        case '"':
+                            line[i] = '"';
+                            break;
+                        case 't':
+                            line[i] = '\t';
+                            break;
+                        case 'x':
+                            // Hexadecimal escape sequence \x00 - \xFF
+                            hexNumber[0] = (char)fgetc(inputFile);
+                            hexNumber[1] = (char)fgetc(inputFile);
+                            hexNumber[2] = 0;
+                            if (!isxdigit(hexNumber[0]) || !isxdigit(hexNumber[1])){
+                                token->token_type = TT_ERR;
+                                free(line);
+                                return 1;
+                            }
+                            line[i] = (char)strtol(hexNumber, NULL, 16);
+                            break;
+                        default:
+                            line[i] = ch;
+                    }
                 }
                 break;
         }
