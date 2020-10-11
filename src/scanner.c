@@ -144,6 +144,51 @@ int next_token(Token* token){
                     token->token_type = TT_SEMICOLON;
                     free(line);
                     return 1;
+                }else if(ch == '<'){
+                    ch = (char)fgetc(inputFile);
+                    if (ch == '='){
+                        token->token_type = TT_LESS_OR_EQUALS;
+                    } else {
+                        token->token_type = TT_LESS;
+                    }
+                    free(line);
+                    return 1;
+                }else if(ch == '>'){
+                    ch = (char)fgetc(inputFile);
+                    if (ch == '='){
+                        token->token_type = TT_GREATER_OR_EQUALS;
+                    } else {
+                        token->token_type = TT_GREATER;
+                    }
+                    free(line);
+                    return 1;
+                }else if(ch == '='){
+                    ch = (char)fgetc(inputFile);
+                    if (ch == '='){
+                        token->token_type = TT_EQUALS;
+                    } else {
+                        token->token_type = TT_ASSIGNMENT;
+                    }
+                    free(line);
+                    return 1;
+                }else if(ch == ':'){
+                    ch = (char)fgetc(inputFile);
+                    if (ch == '='){
+                        token->token_type = TT_DECLARATION_ASSIGNMENT;
+                    } else{
+                        token->token_type = TT_ERR;
+                    }
+                    free(line);
+                    return 1;
+                }else if(ch == '!'){
+                    ch = (char)fgetc(inputFile);
+                    if (ch == '='){
+                        token->token_type = TT_NOT_EQUALS;
+                    } else{
+                        token->token_type = TT_ERR;
+                    }
+                    free(line);
+                    return 1;
                 }else if(ch == '"'){
                     i--;
                     state = SCANSTATE_STRING_LITERAL;
