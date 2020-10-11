@@ -17,6 +17,8 @@ int set_file(FILE* file){
 enum Scan_state{
     SCANSTATE_ERR,
     SCANSTATE_START,
+    SCANSTATE_COMMENT,
+    SCANSTATE_MULTILINE_COMMENT,
     SCANSTATE_IDENTIFIER,
     SCANSTATE_NUMBER,
     SCANSTATE_STRING_LITERAL,
@@ -104,6 +106,18 @@ int next_token(Token* token){
                     line[i] = ch;
                     state = SCANSTATE_IDENTIFIER;
                     break;
+                }else if(ch == '/'){
+                    ch = (char)fgetc(inputFile);
+                    if (ch == '/') {
+                        state = SCANSTATE_COMMENT;
+                    } else if (ch == '*'){
+                        state = SCANSTATE_MULTILINE_COMMENT;
+                    } else{
+                        token->token_type = TT_SLASH;
+                        free(line);
+                        ungetc(ch, inputFile);
+                        return 1;
+                    }
                 }else if(ch == '-'){
                     token->token_type = TT_MINUS;
                     free(line);
@@ -114,10 +128,6 @@ int next_token(Token* token){
                     return 1;
                 }else if(ch == '*'){
                     token->token_type = TT_ASTERISK;
-                    free(line);
-                    return 1;
-                }else if(ch == '/'){
-                    token->token_type = TT_SLASH;
                     free(line);
                     return 1;
                 }else if(ch == '('){
@@ -332,6 +342,23 @@ int next_token(Token* token){
                             break;
                         default:
                             line[i] = ch;
+                    }
+                }
+                break;
+            case SCANSTATE_COMMENT:
+                i = -1;
+                // Reset line position every time because we don't want line to grow.
+                // -1 because it will be incremented to 0
+                if (ch == '\n'){
+                    state = SCANSTATE_START;
+                }
+                break;
+            case SCANSTATE_MULTILINE_COMMENT:
+                i = -1;
+                if (ch == '*'){
+                    ch = (char)fgetc(inputFile);
+                    if (ch == '/'){
+                        state = SCANSTATE_START;
                     }
                 }
                 break;
