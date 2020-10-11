@@ -78,7 +78,18 @@ int next_token(Token* token){
     char *line = malloc(sizeof(char)*16);
     int size = 16;
     for (int i = 0;true;i++){
+        // Having the check here allows first EOF character to go through.
+        if (feof(inputFile)){
+            return 0;
+        }
         char ch = (char)fgetc(inputFile);
+        // If there is not an empty line at the end of the file EOF gets consumed by
+        // the previous token. Because ungetc() does not unset EOF bit we need to do it manually.
+        if (state != SCANSTATE_START && ch == EOF){
+            clearerr(inputFile);
+        }
+
+        // Increase capacity for line when needed.
         if (i >= size){
             size = (int)(size * 1.5);
             line = realloc(line, size*sizeof(char));
@@ -103,13 +114,17 @@ int next_token(Token* token){
                 }else if(ch > '0' && ch <= '9'){
                     line[i] = ch;
                     state = SCANSTATE_NUMBER;
+                }else if(ch == '\n'){
+                    token->token_type = TT_EOL;
+                    free(line);
+                    return 1;
                 } else if (isspace(ch)){
                     i--;
                     break;
-                } else if (ch == EOF){
-                    line[i] = 0;
+                } else if (ch == EOF) {
                     token->token_type = TT_EOF;
-                    return 0;
+                    free(line);
+                    return 1;
                 } else {
                     line[i] = 0;
                     token->token_type = TT_ERR;

@@ -6,6 +6,7 @@
 typedef enum {
     // Meta tokens
     TT_ERR, //! Lexical analysis failed!
+    TT_EOL,
     TT_EOF,
 
     TT_IDENTIFIER,
