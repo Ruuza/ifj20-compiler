@@ -1,6 +1,6 @@
 file(GLOB HEADER_LIST CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/include/libifj20c/*.h")
 
-add_library(libifj20c scanner.c ${HEADER_LIST})
+add_library(libifj20c scanner.c token.c ${HEADER_LIST})
 
 target_include_directories(libifj20c PUBLIC ../include/libifj20c)
 

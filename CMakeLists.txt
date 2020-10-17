@@ -7,10 +7,7 @@ project(ifj20c LANGUAGES C)
 set(CMAKE_C_STANDARD 99)
 
 add_subdirectory(src)
+add_subdirectory(tests)
 
-add_executable(${PROJECT_NAME}
-        apps/main.c
-        src/scanner.c
-        src/token.c)
-target_include_directories(${PROJECT_NAME} PUBLIC include/libifj20c)
+add_executable(${PROJECT_NAME} apps/main.c)
 target_link_libraries(${PROJECT_NAME} PUBLIC libifj20c)
