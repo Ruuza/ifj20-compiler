@@ -39,6 +39,8 @@ char* to_string_attribute(const Token* token){
                     return "if";
                 case KEYWORD_INT:
                     return "int";
+                case KEYWORD_PACKAGE:
+                    return "package";
                 case KEYWORD_RETURN:
                     return "return";
                 case KEYWORD_STRING:

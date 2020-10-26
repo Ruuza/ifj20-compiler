@@ -47,6 +47,9 @@ Keyword get_keyword(const char* attribute){
     if (strcmp(attribute, "int") == 0){
         return KEYWORD_INT;
     }
+    if (strcmp(attribute, "package") == 0){
+        return KEYWORD_PACKAGE;
+    }
     if (strcmp(attribute, "return") == 0){
         return KEYWORD_RETURN;
     }

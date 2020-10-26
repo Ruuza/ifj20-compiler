@@ -53,6 +53,7 @@ typedef enum{
     KEYWORD_FUNC,
     KEYWORD_IF,
     KEYWORD_INT,
+    KEYWORD_PACKAGE,
     KEYWORD_RETURN,
     KEYWORD_STRING
 } Keyword;
