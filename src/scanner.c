@@ -22,6 +22,9 @@ enum Scan_state{
     SCANSTATE_IDENTIFIER,
     SCANSTATE_NUMBER,
     SCANSTATE_STRING_LITERAL,
+    SCANSTATE_ESCAPE_CHAR,
+    SCANSTATE_ESCAPE_CHAR_HEX,
+    SCANSTATE_ESCAPE_CHAR_HEX2,
     SCANSTATE_FLOAT_PRE_EXPONENT,
     SCANSTATE_FLOAT_EXPONENT,
     SCANSTATE_FLOAT,
@@ -303,6 +306,7 @@ int next_token(Token* token){
                 }
                 break;
             case SCANSTATE_STRING_LITERAL:
+                line[i] = ch;
                 if (ch == '"'){
                     line[i] = 0;
                     token->token_type = TT_STRING_LITERAl;
@@ -314,39 +318,57 @@ int next_token(Token* token){
                     free(line);
                     return 1;
                 }
-                line[i] = ch;
-                if (ch == '\\'){
-                    ch = (char)fgetc(inputFile);
-                    char hexNumber[3];
-                    switch(ch){
-                        case 'n':
-                            line[i] = '\n';
-                            break;
-                        case '\\':
-                            line[i] = '\\';
-                            break;
-                        case '"':
-                            line[i] = '"';
-                            break;
-                        case 't':
-                            line[i] = '\t';
-                            break;
-                        case 'x':
-                            // Hexadecimal escape sequence \x00 - \xFF
-                            hexNumber[0] = (char)fgetc(inputFile);
-                            hexNumber[1] = (char)fgetc(inputFile);
-                            hexNumber[2] = 0;
-                            if (!isxdigit(hexNumber[0]) || !isxdigit(hexNumber[1])){
-                                token->token_type = TT_ERR;
-                                free(line);
-                                return 1;
-                            }
-                            line[i] = (char)strtol(hexNumber, NULL, 16);
-                            break;
-                        default:
-                            line[i] = ch;
-                    }
+                if (ch == '\\') {
+                    i--;
+                    state = SCANSTATE_ESCAPE_CHAR;
                 }
+                break;
+            case SCANSTATE_ESCAPE_CHAR:
+                switch(ch) {
+                    case 'n':
+                        line[i] = '\n';
+                        state = SCANSTATE_STRING_LITERAL;
+                        break;
+                    case '\\':
+                        line[i] = '\\';
+                        state = SCANSTATE_STRING_LITERAL;
+                        break;
+                    case '"':
+                        line[i] = '"';
+                        state = SCANSTATE_STRING_LITERAL;
+                        break;
+                    case 't':
+                        line[i] = '\t';
+                        state = SCANSTATE_STRING_LITERAL;
+                        break;
+                    case 'x':
+                        i--;
+                        state = SCANSTATE_ESCAPE_CHAR_HEX;
+                        break;
+                    default:
+                        state = SCANSTATE_STRING_LITERAL;
+                        line[i] = ch;
+                }
+                break;
+            case SCANSTATE_ESCAPE_CHAR_HEX:
+                if (!isxdigit(ch)){
+                    token->token_type = TT_ERR;
+                    free(line);
+                    return 1;
+                }
+                line[i] = ch;
+                state = SCANSTATE_ESCAPE_CHAR_HEX2;
+                break;
+            case SCANSTATE_ESCAPE_CHAR_HEX2:
+                if (!isxdigit(ch)){
+                    token->token_type = TT_ERR;
+                    free(line);
+                    return 1;
+                }
+                line[i] = ch;
+                i--;
+                line[i] = (char)strtol(line+i, NULL, 16);
+                state = SCANSTATE_STRING_LITERAL;
                 break;
             case SCANSTATE_COMMENT:
                 i = -1;
