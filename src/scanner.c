@@ -17,8 +17,15 @@ int set_file(FILE* file){
 enum Scan_state{
     SCANSTATE_ERR,
     SCANSTATE_START,
+    SCANSTATE_SLASH,
+    SCANSTATE_LESS,
+    SCANSTATE_GREATER,
+    SCANSTATE_EQUALS,
+    SCANSTATE_COLON,
+    SCANSTATE_NOT,
     SCANSTATE_COMMENT,
     SCANSTATE_MULTILINE_COMMENT,
+    SCANSTATE_MULTILINE_COMMENT_END,
     SCANSTATE_IDENTIFIER,
     SCANSTATE_NUMBER,
     SCANSTATE_STRING_LITERAL,
@@ -113,17 +120,8 @@ int next_token(Token* token){
                     state = SCANSTATE_IDENTIFIER;
                     break;
                 }else if(ch == '/'){
-                    ch = (char)fgetc(inputFile);
-                    if (ch == '/') {
-                        state = SCANSTATE_COMMENT;
-                    } else if (ch == '*'){
-                        state = SCANSTATE_MULTILINE_COMMENT;
-                    } else{
-                        token->token_type = TT_SLASH;
-                        free(line);
-                        ungetc(ch, inputFile);
-                        return 1;
-                    }
+                    state = SCANSTATE_SLASH;
+                    break;
                 }else if(ch == '-'){
                     token->token_type = TT_MINUS;
                     free(line);
@@ -161,50 +159,20 @@ int next_token(Token* token){
                     free(line);
                     return 1;
                 }else if(ch == '<'){
-                    ch = (char)fgetc(inputFile);
-                    if (ch == '='){
-                        token->token_type = TT_LESS_OR_EQUALS;
-                    } else {
-                        token->token_type = TT_LESS;
-                    }
-                    free(line);
-                    return 1;
+                    state = SCANSTATE_LESS;
+                    break;
                 }else if(ch == '>'){
-                    ch = (char)fgetc(inputFile);
-                    if (ch == '='){
-                        token->token_type = TT_GREATER_OR_EQUALS;
-                    } else {
-                        token->token_type = TT_GREATER;
-                    }
-                    free(line);
-                    return 1;
+                    state = SCANSTATE_GREATER;
+                    break;
                 }else if(ch == '='){
-                    ch = (char)fgetc(inputFile);
-                    if (ch == '='){
-                        token->token_type = TT_EQUALS;
-                    } else {
-                        token->token_type = TT_ASSIGNMENT;
-                    }
-                    free(line);
-                    return 1;
+                    state = SCANSTATE_EQUALS;
+                    break;
                 }else if(ch == ':'){
-                    ch = (char)fgetc(inputFile);
-                    if (ch == '='){
-                        token->token_type = TT_DECLARATION_ASSIGNMENT;
-                    } else{
-                        token->token_type = TT_ERR;
-                    }
-                    free(line);
-                    return 1;
+                    state = SCANSTATE_COLON;
+                    break;
                 }else if(ch == '!'){
-                    ch = (char)fgetc(inputFile);
-                    if (ch == '='){
-                        token->token_type = TT_NOT_EQUALS;
-                    } else{
-                        token->token_type = TT_ERR;
-                    }
-                    free(line);
-                    return 1;
+                    state = SCANSTATE_NOT;
+                    break;
                 }else if(ch == '"'){
                     i--;
                     state = SCANSTATE_STRING_LITERAL;
@@ -229,6 +197,58 @@ int next_token(Token* token){
                     return 1;
                 }
                 break;
+            case SCANSTATE_SLASH:
+                if (ch == '/') {
+                    state = SCANSTATE_COMMENT;
+                } else if (ch == '*'){
+                    state = SCANSTATE_MULTILINE_COMMENT;
+                } else{
+                    token->token_type = TT_SLASH;
+                    free(line);
+                    ungetc(ch, inputFile);
+                    return 1;
+                }
+                break;
+            case SCANSTATE_LESS:
+                if (ch == '='){
+                    token->token_type = TT_LESS_OR_EQUALS;
+                } else {
+                    token->token_type = TT_LESS;
+                }
+                free(line);
+                return 1;
+            case SCANSTATE_GREATER:
+                if (ch == '='){
+                    token->token_type = TT_GREATER_OR_EQUALS;
+                } else {
+                    token->token_type = TT_GREATER;
+                }
+                free(line);
+                return 1;
+            case SCANSTATE_EQUALS:
+                if (ch == '='){
+                    token->token_type = TT_EQUALS;
+                } else {
+                    token->token_type = TT_ASSIGNMENT;
+                }
+                free(line);
+                return 1;
+            case SCANSTATE_COLON:
+                if (ch == '='){
+                    token->token_type = TT_DECLARATION_ASSIGNMENT;
+                } else{
+                    token->token_type = TT_ERR;
+                }
+                free(line);
+                return 1;
+            case SCANSTATE_NOT:
+                if (ch == '='){
+                    token->token_type = TT_NOT_EQUALS;
+                } else{
+                    token->token_type = TT_ERR;
+                }
+                free(line);
+                return 1;
             case SCANSTATE_IDENTIFIER:
                 if (isalnum(ch) || ch == '_') {
                     line[i] = ch;
@@ -381,12 +401,16 @@ int next_token(Token* token){
             case SCANSTATE_MULTILINE_COMMENT:
                 i = -1;
                 if (ch == '*'){
-                    ch = (char)fgetc(inputFile);
-                    if (ch == '/'){
-                        state = SCANSTATE_START;
-                    }
+                    state = SCANSTATE_MULTILINE_COMMENT_END;
                 }
                 break;
+            case SCANSTATE_MULTILINE_COMMENT_END:
+                i = -1;
+                if (ch == '/'){
+                    state = SCANSTATE_START;
+                } else {
+                    state = SCANSTATE_MULTILINE_COMMENT;
+                }
         }
     }
 }
