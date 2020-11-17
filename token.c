@@ -23,29 +23,24 @@ char* to_string_attribute(const Token* token){
             return "+";
         case TT_MINUS:
             return "-";
-        case TT_KEYWORD:
-            switch (token->attribute.keyword) {
-                case KEYWORD_NOT_A_KEYWORD:
-                    return "INVALID-NOT A KEYWORD-INVALID";
-                case KEYWORD_ELSE:
-                    return "else";
-                case KEYWORD_FLOAT64:
-                    return "float64";
-                case KEYWORD_FOR:
-                    return "for";
-                case KEYWORD_FUNC:
-                    return "func";
-                case KEYWORD_IF:
-                    return "if";
-                case KEYWORD_INT:
-                    return "int";
-                case KEYWORD_PACKAGE:
-                    return "package";
-                case KEYWORD_RETURN:
-                    return "return";
-                case KEYWORD_STRING:
-                    return "string";
-            }
+        case TT_KEYWORD_ELSE:
+            return "else";
+        case TT_KEYWORD_FLOAT64:
+            return "float64";
+        case TT_KEYWORD_FOR:
+            return "for";
+        case TT_KEYWORD_FUNC:
+            return "func";
+        case TT_KEYWORD_IF:
+            return "if";
+        case TT_KEYWORD_INT:
+            return "int";
+        case TT_KEYWORD_PACKAGE:
+            return "package";
+        case TT_KEYWORD_RETURN:
+            return "return";
+        case TT_KEYWORD_STRING:
+            return "string";
         case TT_EOL:
             return "EOL";
         case TT_ASSIGNMENT:

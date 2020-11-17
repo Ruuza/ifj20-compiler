@@ -9,9 +9,19 @@ typedef enum {
     TT_EOL,
     TT_EOF,
 
+    // Keywords
+    TT_KEYWORD_ELSE,
+    TT_KEYWORD_FLOAT64,
+    TT_KEYWORD_FOR,
+    TT_KEYWORD_FUNC,
+    TT_KEYWORD_IF,
+    TT_KEYWORD_INT,
+    TT_KEYWORD_PACKAGE,
+    TT_KEYWORD_RETURN,
+    TT_KEYWORD_STRING,
+
     // Tokens with an attribute
     TT_IDENTIFIER, //String
-    TT_KEYWORD, //Keyword
     TT_STRING_LITERAl, //String
     TT_INTEGER_LITERAL, //Int64
     TT_FLOATING_LITERAL, //Double
@@ -45,25 +55,10 @@ typedef enum {
     TT_CLOSE_BRACES,
 } Token_type;
 
-typedef enum{
-    KEYWORD_NOT_A_KEYWORD, //! Something went wrong if token attribute has this value.
-    KEYWORD_ELSE,
-    KEYWORD_FLOAT64,
-    KEYWORD_FOR,
-    KEYWORD_FUNC,
-    KEYWORD_IF,
-    KEYWORD_INT,
-    KEYWORD_PACKAGE,
-    KEYWORD_RETURN,
-    KEYWORD_STRING
-} Keyword;
-
-
 union Token_attribute{
     char* string;
     int64_t integer;
     double floating;
-    Keyword keyword;
 };
 
 struct {
