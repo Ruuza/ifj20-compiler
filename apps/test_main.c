@@ -111,5 +111,10 @@ int main(){
         printf("TEST 4 FAILED\n");
         return 1;
     }
+    // Test end of file in comment
+    if(test_no_errors("/*")){
+        printf("TEST 5 FAILED\n");
+        return 1;
+    }
     return 0;
 }

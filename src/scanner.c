@@ -394,18 +394,30 @@ int next_token(Token* token){
                 i = -1;
                 // Reset line position every time because we don't want line to grow.
                 // -1 because it will be incremented to 0
+                if (ch == EOF){
+                    token->token_type = TT_EOF;
+                    return 1;
+                }
                 if (ch == '\n'){
                     state = SCANSTATE_START;
                 }
                 break;
             case SCANSTATE_MULTILINE_COMMENT:
                 i = -1;
+                if (ch == EOF){
+                    token->token_type = TT_EOF;
+                    return 1;
+                }
                 if (ch == '*'){
                     state = SCANSTATE_MULTILINE_COMMENT_END;
                 }
                 break;
             case SCANSTATE_MULTILINE_COMMENT_END:
                 i = -1;
+                if (ch == EOF){
+                    token->token_type = TT_EOF;
+                    return 1;
+                }
                 if (ch == '/'){
                     state = SCANSTATE_START;
                 } else {
