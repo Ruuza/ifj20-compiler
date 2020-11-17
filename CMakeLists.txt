@@ -1,13 +1,15 @@
 # IFJ PROJECT 2020
-# CMAKE project structure adapted from
-# https://gitlab.com/CLIUtils/modern-cmake/-/tree/master/examples/extended-project
 cmake_minimum_required(VERSION 3.12)
 
 project(ifj20c LANGUAGES C)
 set(CMAKE_C_STANDARD 99)
 
-add_subdirectory(src)
-add_subdirectory(tests)
+# IFJ20 Library
+add_library(libifj20c scanner.c token.c scanner.h token.h)
 
-add_executable(${PROJECT_NAME} apps/main.c)
+# IFJ20C Tests
+add_executable(test_libifj20c test_main.c)
+target_link_libraries(test_libifj20c PUBLIC libifj20c)
+# IFJ20C
+add_executable(${PROJECT_NAME} main.c)
 target_link_libraries(${PROJECT_NAME} PUBLIC libifj20c)
