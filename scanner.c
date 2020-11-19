@@ -37,36 +37,36 @@ enum Scan_state{
     SCANSTATE_FLOAT,
 };
 
-Keyword get_keyword(const char* attribute){
+Token_type get_keyword(const char* attribute){
     //else, float64, for, func, if, int, return, string
     if (strcmp(attribute, "else") == 0){
-        return KEYWORD_ELSE;
+        return TT_KEYWORD_ELSE;
     }
     if (strcmp(attribute, "float64") == 0){
-        return KEYWORD_FLOAT64;
+        return TT_KEYWORD_FLOAT64;
     }
     if (strcmp(attribute, "for") == 0){
-        return KEYWORD_FOR;
+        return TT_KEYWORD_FOR;
     }
     if (strcmp(attribute, "func") == 0){
-        return KEYWORD_FUNC;
+        return TT_KEYWORD_FUNC;
     }
     if (strcmp(attribute, "if") == 0){
-        return KEYWORD_IF;
+        return TT_KEYWORD_IF;
     }
     if (strcmp(attribute, "int") == 0){
-        return KEYWORD_INT;
+        return TT_KEYWORD_INT;
     }
     if (strcmp(attribute, "package") == 0){
-        return KEYWORD_PACKAGE;
+        return TT_KEYWORD_PACKAGE;
     }
     if (strcmp(attribute, "return") == 0){
-        return KEYWORD_RETURN;
+        return TT_KEYWORD_RETURN;
     }
     if (strcmp(attribute, "string") == 0){
-        return KEYWORD_STRING;
+        return TT_KEYWORD_STRING;
     }
-    return KEYWORD_NOT_A_KEYWORD;
+    return TT_IDENTIFIER;
 }
 
 int string_token_to_int(Token *token){
@@ -256,12 +256,9 @@ int next_token(Token* token){
                 } else {
                     line[i] = 0;
                     ungetc(ch, inputFile);
-                    if (get_keyword(line) == KEYWORD_NOT_A_KEYWORD){
-                        token->token_type = TT_IDENTIFIER;
+                    token->token_type = get_keyword(line);
+                    if (token->token_type == TT_IDENTIFIER){
                         token->attribute.string = line;
-                    } else {
-                        token->token_type = TT_KEYWORD;
-                        token->attribute.keyword = get_keyword(line);
                     }
                     return 1;
                 }

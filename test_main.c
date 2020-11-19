@@ -53,12 +53,6 @@ int test_exact_token_sequence(char * string, Token* expected){
                         return 1;
                     }
                     break;
-                case TT_KEYWORD:
-                    if (expected[i].attribute.keyword != scanned.attribute.keyword){
-                        fprintf(stderr, "Keyword %d does dot match %d", scanned.attribute.keyword, expected[i].attribute.keyword);
-                        return 1;
-                    }
-                    break;
                 case TT_INTEGER_LITERAL:
                     if (expected[i].attribute.integer != scanned.attribute.integer){
                         fprintf(stderr, "Integer attribute %ld does dot match %ld", scanned.attribute.integer, expected[i].attribute.integer);

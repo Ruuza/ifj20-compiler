@@ -20,7 +20,7 @@ int next_token(Token* token);
 
 /**
  * @param[IN] attribute
- * @returns appropriate Keyword type for keyword attribute. Returns KEYWORD_NOT_A_KEYWORD if attribute is not a keyword
+ * @returns appropriate token_type for keywords and identifiers.
  */
-Keyword get_keyword(const char* attribute);
+Token_type get_keyword(const char* attribute);
 #endif //IFJ20C_SCANNER_H
