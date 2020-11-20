@@ -1,5 +1,6 @@
 #include "scanner.h"
 #include <string.h>
+#include "symtable.h"
 #include "testData.h"
 
 FILE* test_file = NULL;
@@ -76,6 +77,38 @@ int test_exact_token_sequence(char * string, Token* expected){
     return 0;
 }
 
+int test_symtable(){
+    Symtable_node_ptr symtable;
+    Symtable_init(&symtable);
+
+    Symtable_item* new_item = create_item();
+    new_item->dataType = DT_INT;
+    Symtable_item* item = Symtable_insert(&symtable, "var", new_item);
+    if (new_item != item){
+        fprintf(stderr, "Item insert failed!\n");
+        return 1;
+    }
+
+    Symtable_item* new_item_2 = create_item();
+    new_item_2->dataType = DT_STRING;
+    item = Symtable_insert(&symtable, "str", new_item_2);
+    if (new_item_2 != item){
+        fprintf(stderr, "Item insert failed!\n");
+        return 1;
+    }
+
+    Symtable_delete(&symtable, "var");
+
+    if (new_item_2 != Symtable_search(symtable, "str")){
+        fprintf(stderr, "Item search failed!\n");
+        return 1;
+    }
+
+    Symtable_dispose(&symtable);
+
+    return 0;
+}
+
 int print_tokens(char * string){
     if (setup(string)){
         fprintf(stderr, "Error setting up test environment");
@@ -108,6 +141,10 @@ int main(){
     // Test end of file in comment
     if(test_no_errors("/*")){
         printf("TEST 5 FAILED\n");
+        return 1;
+    }
+    if(test_symtable()){
+        printf("TEST 6 FAILED\n");
         return 1;
     }
     return 0;

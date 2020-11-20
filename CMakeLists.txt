@@ -5,7 +5,7 @@ project(ifj20c LANGUAGES C)
 set(CMAKE_C_STANDARD 99)
 
 # IFJ20 Library
-add_library(libifj20c scanner.c token.c scanner.h token.h)
+add_library(libifj20c scanner.c token.c scanner.h token.h symtable.c symtable.h)
 
 # IFJ20C Tests
 add_executable(test_libifj20c test_main.c)
