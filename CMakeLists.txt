@@ -6,7 +6,19 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_BUILD_TYPE Debug)
 
 # IFJ20 Library
-add_library(libifj20c scanner.c token.c scanner.h token.h symtable.c symtable.h parser.c parser.h return-codes.h)
+add_library(libifj20c
+        scanner.c
+        token.c
+        scanner.h
+        token.h
+        symtable.c
+        symtable.h
+        parser.c
+        parser.h
+        return-codes.h
+        symstack.c
+        symstack.h
+        )
 
 # IFJ20C Tests
 add_executable(test_libifj20c test_main.c)

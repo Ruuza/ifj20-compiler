@@ -1,6 +1,7 @@
 #include "scanner.h"
 #include <string.h>
 #include "symtable.h"
+#include "symstack.h"
 #include "testData.h"
 
 FILE* test_file = NULL;
@@ -109,6 +110,51 @@ int test_symtable(){
     return 0;
 }
 
+int test_symstack(){
+    // Initialize stack
+    Symstack* stack;
+    Symstack_init(&stack);
+
+    // Init symbol table with 1 item
+    Symtable_node_ptr symtable;
+    Symtable_init(&symtable);
+    Symtable_insert(&symtable, "var", create_item());
+
+    // Init empty symbol table
+    Symtable_node_ptr symtable2;
+    Symtable_init(&symtable2);
+
+    // Insert symbol tables onto the stack
+    Symstack_insert(stack, symtable);
+    if (stack->top != 0){
+        fprintf(stderr, "Stack top is %d an should be 0", stack->top);
+        return 1;
+    }
+    Symstack_insert(stack, symtable2);
+    if (stack->top != 1){
+        fprintf(stderr, "Stack top is %d an should be 1", stack->top);
+        return 1;
+    }
+
+    // Pop out one
+    free_symtable_node(Symstack_pop(stack));
+    // Pop out second symbol table and check that it is the same we put in
+    Symtable_node_ptr popped_symtable = Symstack_pop(stack);
+    if (popped_symtable != symtable){
+        fprintf(stderr, "Symstack_pop returned wrong table");
+        return 1;
+    }
+    free_symtable_node(popped_symtable);
+    // Check that the stack is now empty
+    if (Symstack_head(stack) != NULL){
+        fprintf(stderr, "Symstack is not empty");
+        return 1;
+    }
+    // Cleanup
+    Symstack_dispose(&stack);
+    return 0;
+}
+
 int print_tokens(char * string){
     if (setup(string)){
         fprintf(stderr, "Error setting up test environment");
@@ -145,6 +191,10 @@ int main(){
     }
     if(test_symtable()){
         printf("TEST 6 FAILED\n");
+        return 1;
+    }
+    if(test_symstack()){
+        printf("TEST 7 FAILED\n");
         return 1;
     }
     return 0;

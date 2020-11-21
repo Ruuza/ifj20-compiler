@@ -58,13 +58,11 @@ void ReplaceByRightmost(Symtable_node_ptr PtrReplaced, Symtable_node_ptr *RootPt
         PtrReplaced->Key = (*RootPtr)->Key;
         if ((*RootPtr)->LPtr == NULL) {
             free_symtable_node(*RootPtr);
-            free(*RootPtr);
             (*RootPtr) = NULL;
         } else {
             Symtable_node_ptr temp = *RootPtr;
             *RootPtr = temp->LPtr;
             free_symtable_node(temp);
-            free(temp);
         }
     }
 
@@ -80,17 +78,14 @@ void Symtable_delete(Symtable_node_ptr *RootPtr, char *key) {
     if (cmp == 0) {
         if ((*RootPtr)->LPtr == NULL && (*RootPtr)->RPtr == NULL) {
             free_symtable_node(*RootPtr);
-            free(*RootPtr);
             *RootPtr = NULL;
         } else if ((*RootPtr)->RPtr == NULL) {
             Symtable_node_ptr LeftPtr = (*RootPtr)->LPtr;
             free_symtable_node(*RootPtr);
-            free(*RootPtr);
             *RootPtr = LeftPtr;
         } else if ((*RootPtr)->LPtr == NULL) {
             Symtable_node_ptr RightPtr = (*RootPtr)->RPtr;
             free_symtable_node(*RootPtr);
-            free(*RootPtr);
             *RootPtr = RightPtr;
         } else {
             ReplaceByRightmost(*RootPtr, &(*RootPtr)->LPtr);
@@ -112,7 +107,6 @@ void Symtable_dispose(Symtable_node_ptr *root) {
     Symtable_dispose(&(*root)->RPtr);
     Symtable_dispose(&(*root)->LPtr);
     free_symtable_node(*root);
-    free(*root);
     *root = NULL;
 }
 
@@ -120,6 +114,7 @@ void free_symtable_item(Symtable_item* item){
     if (item->parameters != NULL){
         free(item->parameters);
     }
+    free(item);
 }
 
 void free_symtable_node(Symtable_node_ptr node){
@@ -127,10 +122,8 @@ void free_symtable_node(Symtable_node_ptr node){
         return;
     }
     free(node->Key);
-    node->Key = NULL;
     free_symtable_item(node->Value);
-    free(node->Value);
-    node->Value = NULL;
+    free(node);
 }
 
 Symtable_item* create_item(){
