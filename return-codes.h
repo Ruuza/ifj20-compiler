@@ -1,0 +1,9 @@
+#ifndef IFJ20C_RETURN_CODES_H
+#define IFJ20C_RETURN_CODES_H
+
+#define OK 0
+#define LEXICAL_ERROR 1
+#define SYNTAX_ERROR 2
+#define SEMANTIC_ERROR 3
+
+#endif //IFJ20C_RETURN_CODES_H
