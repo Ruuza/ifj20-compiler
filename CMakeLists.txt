@@ -1,11 +1,12 @@
 # IFJ PROJECT 2020
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.10.2)
 
 project(ifj20c LANGUAGES C)
 set(CMAKE_C_STANDARD 99)
+set(CMAKE_BUILD_TYPE Debug)
 
 # IFJ20 Library
-add_library(libifj20c scanner.c token.c scanner.h token.h symtable.c symtable.h)
+add_library(libifj20c scanner.c token.c scanner.h token.h symtable.c symtable.h parser.c parser.h return-codes.h)
 
 # IFJ20C Tests
 add_executable(test_libifj20c test_main.c)
