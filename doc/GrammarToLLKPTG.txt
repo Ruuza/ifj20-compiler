@@ -1,0 +1,50 @@
+%token func id left_curve right_curve left_curly_curve right_curly_curve id int string float64 comma if for semicolon return prirazeni else eof expression package
+%%
+
+START : PREAMBLE BODY ;
+
+PREAMBLE : package id ;
+
+BODY : FUNC BODY
+ | eof ;
+
+FUNC : func id left_curve PARAMS right_curve RET_TYPES left_curly_curve STATL right_curly_curve ;
+
+PARAMS : /*eps*/
+ | PARAM PARAMS_N ;
+PARAMS_N : /*eps*/
+ | comma PARAM PARAMS_N ;
+
+PARAM  : id DATA_TYPE ;
+
+RET_TYPES : /*eps*/
+ | DATA_TYPE
+ | left_curve TYPES right_curve ;
+
+TYPES  : /*eps*/
+ | DATA_TYPE TYPES_N ;
+TYPES_N  : /*eps*/
+ | comma DATA_TYPE TYPES_N ;
+
+DATA_TYPE : int
+ | string
+ | float64 ;
+
+STATL : /*eps*/
+ | STATE STATL ;
+
+STATE  : DECLR
+ | EXPR
+ | if EXPR left_curly_curve STATL right_curly_curve ELSE 
+ | for FOR_DECLR EXPR semicolon EXPR left_curly_curve STATL right_curly_curve
+ | return EXPR ;
+
+DECLR : id prirazeni EXPR ;
+
+FOR_DECLR : DECLR semicolon
+ | semicolon ;
+
+ELSE : /*eps*/
+ | else left_curly_curve STATL right_curly_curve ;
+
+EXPR : expression ;
