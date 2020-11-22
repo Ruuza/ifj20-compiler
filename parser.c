@@ -1,3 +1,12 @@
+/**
+ * parser.c
+ * 
+ * @brief Syntax and semantic analysis. Parsing expressions.
+ * 
+ * @author Petr Růžanský <xruzan00>
+ * 
+ */
+
 #include "parser.h"
 #include "scanner.h"
 #include "token.h"
@@ -10,6 +19,7 @@ int return_code;
 Token token;
 Token prev_token;
 
+// Load nech token, check the return code and check if EOL is allowed.
 #define NEXT()                                \
     {                                         \
         while (1)                             \
@@ -34,6 +44,7 @@ Token prev_token;
         }                                     \
     }
 
+// Compare actual token with TOK and then call and compare next token.
 #define CHECK_AND_LOAD_TOKEN(TOK)             \
     {                                         \
         if (second_token == true)             \
@@ -54,6 +65,7 @@ Token prev_token;
         }                                     \
     }
 
+// Call function FUN and check return code.
 #define CHECK_AND_CALL_FUNCTION(FUN) \
     {                                \
         return_code = FUN;           \
@@ -63,6 +75,7 @@ Token prev_token;
         }                            \
     }
 
+// Init nonterminal states:
 int Func_param_n();
 int For_declr();
 int Else();
@@ -83,6 +96,9 @@ int Func();
 int Body();
 int Preamble();
 int Start();
+/////////////////////////////
+
+// NONTERMINAL STATES
 
 int For_declr()
 {
@@ -150,6 +166,7 @@ int Else()
         //     break;
 
     case TT_KEYWORD_ELSE:
+        // Rule: <else> -> else { <stat_list> }
 
         CHECK_AND_LOAD_TOKEN(TT_KEYWORD_ELSE);
 
@@ -159,7 +176,6 @@ int Else()
 
         CHECK_AND_LOAD_TOKEN(TT_CLOSE_BRACES);
 
-        // Rule: <else> -> else { <stat_list> }
         return OK;
         break;
 
