@@ -21,14 +21,20 @@
 <state_list>    ->  eps
 <state_list>    ->  <state> <state_list>
 <state>     ->  <declr>
-<state>     ->  <expression>
 <state>     ->  if <expression> { <state_list> } <else> 
 <state>     ->  for <for_declr> <expression> ; <expression> { <state_list> }
 <state>     ->  return <expression>
+<state>     ->  id ( <func_param> )
+<state>     ->  id <id_n> = <expr>
+<id_n>      ->  eps
+<id_n>      ->  , id <id_n>
+<func_param>    -> eps
+<func_param>    -> <expr> <func_param_n>
+<func_param_n>  -> eps
+<func_param_n>  -> , <expr> <func_param_n>
 <declr>     ->  id := <expression>
 <for_declr> ->  <declr> ;
 <for_declr> ->  ;
-<else>      ->  eps
 <else>      ->  else { <state_list> }
 
 
