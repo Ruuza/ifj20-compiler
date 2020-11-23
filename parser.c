@@ -539,7 +539,7 @@ int Params()
 
         CHECK_AND_CALL_FUNCTION(Param());
 
-        CHECK_AND_LOAD_TOKEN(Params_n());
+        CHECK_AND_CALL_FUNCTION(Params_n());
 
         return OK;
 
