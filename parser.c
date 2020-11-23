@@ -13,6 +13,7 @@
 #include "return-codes.h"
 #include "stdbool.h"
 
+bool is_EOL = false;
 bool EOL_allowed = true;
 bool second_token = false;
 int return_code;
@@ -22,6 +23,7 @@ Token prev_token;
 // Load nech token, check the return code and check if EOL is allowed.
 #define NEXT()                                \
     {                                         \
+        is_EOL = false;                       \
         while (1)                             \
         {                                     \
             return_code = next_token(&token); \
@@ -33,6 +35,7 @@ Token prev_token;
             {                                 \
                 if (EOL_allowed)              \
                 {                             \
+                    is_EOL = true;            \
                     continue;                 \
                 }                             \
                 else                          \
@@ -329,6 +332,7 @@ int State()
 
     case TT_KEYWORD_IF:
         // Rule: <state> -> if <expr> { <stat_list> } <else>
+
         CHECK_AND_LOAD_TOKEN(TT_KEYWORD_IF);
 
         CHECK_AND_CALL_FUNCTION(Expresion());
@@ -470,6 +474,7 @@ int Param()
 
 int Stat_list()
 {
+
     switch (token.token_type)
     {
     case TT_IDENTIFIER:
@@ -478,6 +483,15 @@ int Stat_list()
     case TT_KEYWORD_RETURN:
         // Rule: <statl> -> <state> <stat_list>
         CHECK_AND_CALL_FUNCTION(State());
+
+        if (is_EOL != true)
+        {
+            return SYNTAX_ERROR;
+        }
+        else
+        {
+            is_EOL = false;
+        }
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
         return OK;
@@ -560,6 +574,9 @@ int Params()
 int Func()
 {
     // Rule: <func> -> func id ( <params> ) <ret_types> { <stat_list> }
+
+    EOL_allowed = false;
+
     CHECK_AND_LOAD_TOKEN(TT_KEYWORD_FUNC);
 
     CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
@@ -572,7 +589,18 @@ int Func()
 
     CHECK_AND_CALL_FUNCTION(Ret_types());
 
+    EOL_allowed = true;
+
     CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
+
+    if (is_EOL != true)
+    {
+        return SYNTAX_ERROR;
+    }
+    else
+    {
+        is_EOL = false;
+    }
 
     CHECK_AND_CALL_FUNCTION(Stat_list());
 
@@ -607,10 +635,22 @@ int Body()
 int Preamble()
 {
     // rule <preamble> -> package id
+    EOL_allowed = false;
 
     CHECK_AND_LOAD_TOKEN(TT_KEYWORD_PACKAGE);
 
+    EOL_allowed = true;
+
     CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
+
+    if (is_EOL != true)
+    {
+        return SYNTAX_ERROR;
+    }
+    else
+    {
+        is_EOL = false;
+    }
 
     return OK;
 }
