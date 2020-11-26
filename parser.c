@@ -26,8 +26,8 @@ Token prev_token;
         is_EOL = false;                       \
         while (1)                             \
         {                                     \
-            return_code = next_token(&token); \
-            if (return_code == -1)            \
+            next_token(&token);               \
+            if (token.token_type == TT_ERR)   \
             {                                 \
                 return LEXICAL_ERROR;         \
             }                                 \
@@ -74,7 +74,7 @@ Token prev_token;
         return_code = FUN;           \
         if (return_code != OK)       \
         {                            \
-            return SYNTAX_ERROR;     \
+            return return_code;     \
         }                            \
     }
 
