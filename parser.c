@@ -12,6 +12,7 @@
 #include "token.h"
 #include "return-codes.h"
 #include "stdbool.h"
+#include "codegen.h"
 
 bool is_EOL = false;
 bool EOL_allowed = true;
@@ -660,6 +661,7 @@ int Start()
     // rule <start> -> <preamle> <body>
 
     CHECK_AND_CALL_FUNCTION(Preamble());
+    generate_header();
 
     CHECK_AND_CALL_FUNCTION(Body());
 
