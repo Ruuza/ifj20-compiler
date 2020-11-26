@@ -13,7 +13,8 @@ add_library(libifj20c
         parser.c parser.h
         return-codes.h
         symstack.c symstack.h
-        precedence.c precedence.h)
+        precedence.c precedence.h
+        precedence-stack.c precedence-stack.h)
 
 # IFJ20C Tests
 add_executable(test_libifj20c test_main.c)
