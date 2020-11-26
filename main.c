@@ -1,20 +1,15 @@
 #include "parser.h"
 #include "scanner.h"
 
-int main(int argc, char const *argv[])
+int main()
 {
-    FILE *srcFile;
-    char const *text = argv[1];
-    srcFile = fopen(argv[1], "r");
-
-    int scanner_file_return = set_file(srcFile);
+    int scanner_file_return = set_file(stdin);
     if (scanner_file_return == -1)
     {
-        printf("Failed to open file");
-        return 1;
+        fprintf(stderr, "Failed to open file");
+        return 99;
     }
 
     int parse_return = parse();
-
-    return (parse_return);
+    return parse_return;
 }
