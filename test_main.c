@@ -3,6 +3,8 @@
 #include "symtable.h"
 #include "symstack.h"
 #include "testData.h"
+#include "parser.h"
+#include "codegen.h"
 
 FILE* test_file = NULL;
 
@@ -15,6 +17,7 @@ int setup(char * string){
         fprintf(stderr, "Invalid input file");
         return 1;
     }
+    set_code_output(stdout);
     return 0;
 }
 
@@ -163,6 +166,18 @@ int print_tokens(char * string){
     Token token;
     while (next_token(&token)){
         printf("%d - \"%s\"\n", token.token_type, to_string_attribute(&token));
+    }
+    return 0;
+}
+
+int test_return_value(char * input, int expected){
+    if (setup(input)){
+        fprintf(stderr, "Error setting up test environment");
+        return 1;
+    }
+    int parse_return = parse();
+    if (parse_return != expected){
+        return 1;
     }
     return 0;
 }

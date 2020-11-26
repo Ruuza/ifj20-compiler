@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "codegen.h"
 #include "scanner.h"
 
 int main()
@@ -10,6 +11,7 @@ int main()
         return 99;
     }
 
+    set_code_output(stdout);
     int parse_return = parse();
     return parse_return;
 }
