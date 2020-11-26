@@ -363,8 +363,9 @@ int next_token(Token* token){
                         state = SCANSTATE_ESCAPE_CHAR_HEX;
                         break;
                     default:
-                        state = SCANSTATE_STRING_LITERAL;
-                        line[i] = ch;
+                        free(line);
+                        token->token_type = TT_ERR;
+                        return 1;
                 }
                 break;
             case SCANSTATE_ESCAPE_CHAR_HEX:
@@ -402,7 +403,7 @@ int next_token(Token* token){
             case SCANSTATE_MULTILINE_COMMENT:
                 i = -1;
                 if (ch == EOF){
-                    token->token_type = TT_EOF;
+                    token->token_type = TT_ERR;
                     return 1;
                 }
                 if (ch == '*'){
