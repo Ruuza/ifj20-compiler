@@ -20,7 +20,7 @@ int return_code;
 Token token;
 Token prev_token;
 
-// Load nech token, check the return code and check if EOL is allowed.
+// Load next token, check the return code and check if EOL is allowed.
 #define NEXT()                                \
     {                                         \
         is_EOL = false;                       \
@@ -88,7 +88,7 @@ int Declr();
 int Types_n();
 int Func_param();
 int State();
-int Data_type();
+int State_data_type();
 int Types();
 int Params_n();
 int Param();
@@ -220,7 +220,7 @@ int Types_n()
         // Rule: <types_n> -> , <data_type> <types_n>
         CHECK_AND_LOAD_TOKEN(TT_COMMA);
 
-        CHECK_AND_CALL_FUNCTION(Data_type());
+        CHECK_AND_CALL_FUNCTION(State_data_type());
 
         CHECK_AND_CALL_FUNCTION(Types_n());
         return OK;
@@ -383,7 +383,7 @@ int State()
     }
 }
 
-int Data_type()
+int State_data_type()
 {
     switch (token.token_type)
     {
@@ -426,7 +426,7 @@ int Types()
     case TT_KEYWORD_FLOAT64:
         // Rule: <types> -> <data_type> <types_n>
 
-        CHECK_AND_CALL_FUNCTION(Data_type());
+        CHECK_AND_CALL_FUNCTION(State_data_type());
         CHECK_AND_CALL_FUNCTION(Types_n());
         return OK;
         break;
@@ -467,7 +467,7 @@ int Param()
     // Rule: <param> -> id <data_type>
     CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
 
-    CHECK_AND_CALL_FUNCTION(Data_type());
+    CHECK_AND_CALL_FUNCTION(State_data_type());
 
     return OK;
 }
@@ -533,7 +533,7 @@ int Ret_types()
     case TT_KEYWORD_STRING:
     case TT_KEYWORD_FLOAT64:
         // Rule: <ret_types> -> <data_type>
-        CHECK_AND_CALL_FUNCTION(Data_type());
+        CHECK_AND_CALL_FUNCTION(State_data_type());
 
         return OK;
         break;
