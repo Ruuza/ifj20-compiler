@@ -14,6 +14,12 @@ int set_file(FILE* file){
     inputFile = file;
     return 0;
 }
+
+int rewind_file(){
+    rewind(inputFile);
+    return 0;
+};
+
 enum Scan_state{
     SCANSTATE_ERR,
     SCANSTATE_START,

@@ -86,7 +86,7 @@ int test_symtable(){
     Symtable_init(&symtable);
 
     Symtable_item* new_item = create_item();
-    new_item->dataType = DT_INT;
+    new_item->dataType[0] = DT_INT;
     Symtable_item* item = Symtable_insert(&symtable, "var", new_item);
     if (new_item != item){
         fprintf(stderr, "Item insert failed!\n");
@@ -94,7 +94,7 @@ int test_symtable(){
     }
 
     Symtable_item* new_item_2 = create_item();
-    new_item_2->dataType = DT_STRING;
+    new_item_2->dataType[0] = DT_STRING;
     item = Symtable_insert(&symtable, "str", new_item_2);
     if (new_item_2 != item){
         fprintf(stderr, "Item insert failed!\n");

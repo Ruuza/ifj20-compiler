@@ -7,6 +7,8 @@
 #include <stdbool.h>
 #include "token.h"
 
+#define MAXIMUM_RETURN_VALUES 10
+
 /**
  * Variable datatype or function return type
  */
@@ -17,15 +19,16 @@ typedef enum {
     DT_FLOAT
 } Data_type;
 
-typedef struct Parameters{
-    char* name;
-    bool init;
-    bool used;
-} Parameters;
+typedef struct {
+    char* identifier;
+    Data_type dataType;
+} Parameter;
 
 typedef struct {
-    Data_type dataType;
-    Parameters parameters;
+    Data_type dataType[MAXIMUM_RETURN_VALUES];
+    int return_values_count;
+    Parameter* parameters;
+    int parameter_count;
 } Symtable_item;
 
 /*

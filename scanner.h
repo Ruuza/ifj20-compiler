@@ -12,6 +12,11 @@
 int set_file(FILE* file);
 
 /**
+ * Starts reading source file from the beginning
+ */
+int rewind_file();
+
+/**
  * Lexes next token from open file
  * @param[OUT] token
  * @return -1 on error, 1 on success, 0 on EOF

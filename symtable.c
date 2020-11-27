@@ -112,6 +112,9 @@ void Symtable_dispose(Symtable_node_ptr *root) {
 
 void free_symtable_item(Symtable_item* item){
     if (item->parameters != NULL){
+        for(int i = 0; i < item->parameter_count;i++){
+            free((item->parameters[i]).identifier);
+        }
         free(item->parameters);
     }
     free(item);
@@ -128,7 +131,8 @@ void free_symtable_node(Symtable_node_ptr node){
 
 Symtable_item* create_item(){
     Symtable_item* item = malloc(sizeof(Symtable_item));
-    item->dataType = DT_VOID;
     item->parameters = NULL;
+    item->parameter_count = 0;
+    item->return_values_count = 0;
     return item;
 }
