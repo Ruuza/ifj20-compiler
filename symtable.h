@@ -17,9 +17,15 @@ typedef enum {
     DT_FLOAT
 } Data_type;
 
+typedef struct Parameters{
+    char* name;
+    bool init;
+    bool used;
+} Parameters;
+
 typedef struct {
     Data_type dataType;
-    Data_type* parameters;
+    Parameters parameters;
 } Symtable_item;
 
 /*
