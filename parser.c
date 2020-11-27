@@ -25,6 +25,8 @@ int return_code;
 Token token;
 Token prev_token;
 Symtable_node_ptr global_symbol_table;
+Symtable_item* current_function;
+int param_counter;
 
 // Load next token, check the return code and check if EOL is allowed.
 #define NEXT()                              \
@@ -544,6 +546,8 @@ int Param()
     CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
 
     CHECK_AND_CALL_FUNCTION(State_data_type());
+    generate_func_param(current_function->parameters[param_counter].identifier, param_counter+1);
+    param_counter++;
 
     return OK;
 }
@@ -656,9 +660,15 @@ int Func()
     CHECK_AND_LOAD_TOKEN(TT_KEYWORD_FUNC);
 
     CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
+    char* function_identifier = malloc(sizeof(*token.attribute.string) * strlen(token.attribute.string) + 1);
+    current_function = Symtable_search(global_symbol_table, token.attribute.string);
+    strcpy(function_identifier, token.attribute.string);
+    generate_func_top(token.attribute.string);
+    generate_return_values(current_function);
 
     CHECK_AND_LOAD_TOKEN(TT_OPEN_PARENTHESES);
 
+    param_counter = 0;
     CHECK_AND_CALL_FUNCTION(Params());
 
     CHECK_AND_LOAD_TOKEN(TT_CLOSE_PARENTHESES);
@@ -681,7 +691,8 @@ int Func()
     CHECK_AND_CALL_FUNCTION(Stat_list());
 
     CHECK_AND_LOAD_TOKEN(TT_CLOSE_BRACES);
-
+    generate_func_bottom(function_identifier);
+    free(function_identifier);
     return OK;
 }
 
