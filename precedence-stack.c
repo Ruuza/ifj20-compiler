@@ -17,7 +17,7 @@ int precedenceStackInit(tPrecedenceStack *s)
         return -1;
     }
 
-    //Identies, that stack is empty
+    //Identifies, that stack is empty
     s->top = -1;
 
     return 1;
