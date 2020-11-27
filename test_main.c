@@ -199,11 +199,6 @@ int main(){
         printf("TEST 4 FAILED\n");
         return 1;
     }
-    // Test end of file in comment
-    if(test_no_errors("/*")){
-        printf("TEST 5 FAILED\n");
-        return 1;
-    }
     if(test_symtable()){
         printf("TEST 6 FAILED\n");
         return 1;
