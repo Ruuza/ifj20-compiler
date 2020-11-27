@@ -15,6 +15,8 @@
 #include "codegen.h"
 #include "symtable.h"
 #include "string.h"
+#include "precedence-stack.h"
+#include "precedence.c"
 
 bool is_EOL = false;
 bool EOL_allowed = true;
@@ -204,7 +206,65 @@ int Else()
 
 int Expresion()
 {
-    CHECK_AND_LOAD_TOKEN(TT_INTEGER_LITERAL);
+    Token a,b;
+    a.token_type,b.token_type = TT_ERR;
+    tPrecedenceStack stack;
+    Precedence_sign table;
+    precedenceStackInit(&stack);
+    b.attribute.string = "$";
+    precedenceStackPush(&stack,b,false,false);
+    bool firstCycle = true;
+    prev_token = a ;
+    while (!((a.attribute.string/*top*/ != "$" && b.attribute.string != "$") && firstCycle == false)){
+        if (firstCycle){
+            firstCycle = false;
+        }
+        prev_token = a ;
+        precedenceStackTopTerminal(&stack,&a);
+        NEXT();
+        b = token;
+        // shift and nonterminal contro//
+        /*if (b.token_type == TT_LESS){
+            precedenceStackPush(&stack,b,true,false);
+        }
+        else if (b.token_type == TT_IDENTIFIER){
+            precedenceStackPush(&stack,b,false,true);
+        }
+        else{*/
+        //////////////////////////////////
+        Precedence_sign c = precedence_lookup(a.token_type,b.token_type);
+        
+            switch (c)
+            {
+            case PRECEDENCE_L:
+                a.token_type = TT_LESS;
+                a.attribute.string = "<";
+                precedenceStackPush(&stack,a,false,false);
+                precedenceStackPush(&stack,b,false,false); 
+                break;
+            case PRECEDENCE_G: // need help
+                if ((prev_token.attribute.string == "<" && prev_token.token_type == TT_STRING_LITERAl) && a.token_type == TT_IDENTIFIER){
+                    precedenceStackPop(&stack);// IDENTIFIER
+                    precedenceStackPop(&stack);// '<'
+                    CHECK_AND_LOAD_TOKEN(b.token_type);
+                    b = token; 
+                    precedenceStackPush(&stack,b,false,false);
+                    //print rule by which we get A --todo--
+                }
+                else{
+                    return SYNTAX_ERROR;
+                }
+                break;
+            case PRECEDENCE_E:
+                precedenceStackPush(&stack,b,false,false);
+                break;    
+            default:
+                return SYNTAX_ERROR;
+                break;
+            }
+        //}
+    }
+    //CHECK_AND_LOAD_TOKEN(TT_INTEGER_LITERAL);
     return OK;
 }
 
