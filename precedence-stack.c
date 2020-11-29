@@ -19,6 +19,11 @@ int precedenceStackInit(tPrecedenceStack *s)
 
     //Identifies, that stack is empty
     s->top = -1;
+    for (int i = 0; i < MAX_STACK; i++)
+    {
+        s->shift[i] = false;
+        s->nonterminal[i] = false;
+    }
 
     return 1;
 }

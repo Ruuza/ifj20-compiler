@@ -31,30 +31,30 @@ int param_counter;
 Symstack* symtable_stack;
 
 // Load next token, check the return code and check if EOL is allowed.
-#define NEXT()                                \
-    {                                         \
-        is_EOL = false;                       \
-        while (1)                             \
-        {                                     \
-            next_token(&token);               \
-            if (token.token_type == TT_ERR)   \
-            {                                 \
-                return LEXICAL_ERROR;         \
-            }                                 \
-            if (token.token_type == TT_EOL)   \
-            {                                 \
-                if (EOL_allowed)              \
-                {                             \
-                    is_EOL = true;            \
-                    continue;                 \
-                }                             \
-                else                          \
-                {                             \
-                    break;                    \
-                }                             \
-            }                                 \
-            break;                            \
-        }                                     \
+#define NEXT()                              \
+    {                                       \
+        is_EOL = false;                     \
+        while (1)                           \
+        {                                   \
+            next_token(&token);             \
+            if (token.token_type == TT_ERR) \
+            {                               \
+                return LEXICAL_ERROR;       \
+            }                               \
+            if (token.token_type == TT_EOL) \
+            {                               \
+                if (EOL_allowed)            \
+                {                           \
+                    is_EOL = true;          \
+                    continue;               \
+                }                           \
+                else                        \
+                {                           \
+                    break;                  \
+                }                           \
+            }                               \
+            break;                          \
+        }                                   \
     }
 
 // Compare actual token with TOK and then call and compare next token.
@@ -84,7 +84,7 @@ Symstack* symtable_stack;
         return_code = FUN;           \
         if (return_code != OK)       \
         {                            \
-            return return_code;     \
+            return return_code;      \
         }                            \
     }
 
@@ -111,13 +111,13 @@ int Preamble();
 int Start();
 
 int fast_func();
-int fast_param(Symtable_item* function);
-int fast_params(Symtable_item* function);
-int fast_params_n(Symtable_item* function);
-int fast_ret_types(Symtable_item* function);
-int fast_types(Symtable_item* function);
-int fast_state_data_type(Symtable_item* function);
-int fast_types_n(Symtable_item* function);
+int fast_param(Symtable_item *function);
+int fast_params(Symtable_item *function);
+int fast_params_n(Symtable_item *function);
+int fast_ret_types(Symtable_item *function);
+int fast_types(Symtable_item *function);
+int fast_state_data_type(Symtable_item *function);
+int fast_types_n(Symtable_item *function);
 /////////////////////////////
 
 // NONTERMINAL STATES
@@ -215,65 +215,66 @@ int Else()
 
 int Expresion()
 {
-    Token a,b;
-    a.token_type,b.token_type = TT_ERR;
+    Token a, b;
+    a.token_type, b.token_type = TT_ERR;
     tPrecedenceStack stack;
     Precedence_sign table;
     precedenceStackInit(&stack);
-    b.attribute.string = "$";
-    precedenceStackPush(&stack,b,false,false);
     bool firstCycle = true;
     prev_token = a ;
     while (!((a.attribute.string/*top*/ != "$") && (b.attribute.string != "$") && (firstCycle == false))){
         if (firstCycle){
             firstCycle = false;
         }
-        prev_token = a ;
-        precedenceStackTopTerminal(&stack,&a);
-        NEXT();
-        b = token;
-        // shift and nonterminal contro//
-        /*if (b.token_type == TT_LESS){
-            precedenceStackPush(&stack,b,true,false);
+        precedenceStackTopTerminal(&stack, &a);
+        if (token.token_type == TT_COMMA || token.token_type == TT_OPEN_BRACES || token.token_type == TT_SEMICOLON || is_EOL)
+        {
+            b.token_type = TT_ERR;
+            b.attribute.string = "$";
         }
-        else if (b.token_type == TT_IDENTIFIER){
-            precedenceStackPush(&stack,b,false,true);
+        else
+        {
+            b = token;
         }
-        else{*/
-        //////////////////////////////////
-        Precedence_sign c = precedence_lookup(a.token_type,b.token_type);
-        
-            switch (c)
+
+        Precedence_sign c = precedence_lookup(a.token_type, b.token_type);
+
+        bool isShift = false;
+        bool isNonterminal = false;
+        Token skippingToken;
+
+        switch (c)
+        {
+        case PRECEDENCE_L:
+            precedenceStackPush(&stack, a, true, false);
+            precedenceStackPush(&stack, b, false, false);
+            NEXT();
+            break;
+        case PRECEDENCE_G:
+
+            // REDUCE
+
+            do
             {
-            case PRECEDENCE_L:
-                a.token_type = TT_LESS;
-                a.attribute.string = "<";
-                precedenceStackPush(&stack,a,false,false);
-                precedenceStackPush(&stack,b,false,false); 
-                break;
-            case PRECEDENCE_G: // need help
-                if ((prev_token.attribute.string == "<" && prev_token.token_type == TT_STRING_LITERAl) && a.token_type == TT_IDENTIFIER){
-                    precedenceStackPop(&stack);// IDENTIFIER
-                    precedenceStackPop(&stack);// '<'
-                    CHECK_AND_LOAD_TOKEN(b.token_type);
-                    b = token; 
-                    precedenceStackPush(&stack,b,false,false);
-                    //print rule by which we get A --todo--
-                }
-                else{
+                precedenceStackTop(&stack, &skippingToken, &isShift, &isNonterminal);
+                precedenceStackPop(&stack);
+
+                if (precedenceStackEmpty(&stack))
+                {
                     return SYNTAX_ERROR;
                 }
-                break;
-            case PRECEDENCE_E:
-                precedenceStackPush(&stack,b,false,false);
-                break;    
-            default:
-                return SYNTAX_ERROR;
-                break;
-            }
-        //}
+            } while (isShift != true);
+
+            break;
+        case PRECEDENCE_E:
+            precedenceStackPush(&stack, b, false, false);
+            NEXT();
+            break;
+        default:
+            return SYNTAX_ERROR;
+            break;
+        }
     }
-    //CHECK_AND_LOAD_TOKEN(TT_INTEGER_LITERAL);
     return OK;
 }
 
@@ -717,6 +718,7 @@ int Func()
 
     Symtable_node_ptr helper = Symstack_pop(symtable_stack);
     Symtable_dispose(&helper);
+ 
     return OK;
 }
 
@@ -785,9 +787,11 @@ int Start()
 int fill_function_table()
 {
     Symtable_init(&global_symbol_table);
-    while (token.token_type != TT_EOF){
+    while (token.token_type != TT_EOF)
+    {
         NEXT();
-        if (token.token_type == TT_KEYWORD_FUNC){
+        if (token.token_type == TT_KEYWORD_FUNC)
+        {
             CHECK_AND_CALL_FUNCTION(fast_func());
         }
     }
@@ -798,13 +802,13 @@ int fill_function_table()
 int fast_func()
 {
     // Rule: <func> -> func id ( <params> ) <ret_types> { <stat_list> }
-    char* function_name;
-    Symtable_item* function = create_item();
+    char *function_name;
+    Symtable_item *function = create_item();
     EOL_allowed = false;
 
     CHECK_AND_LOAD_TOKEN(TT_KEYWORD_FUNC);
     CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
-    function_name = malloc(sizeof(*token.attribute.string)*strlen(token.attribute.string)+1);
+    function_name = malloc(sizeof(*token.attribute.string) * strlen(token.attribute.string) + 1);
     strcpy(function_name, token.attribute.string);
 
     CHECK_AND_LOAD_TOKEN(TT_OPEN_PARENTHESES);
@@ -816,22 +820,28 @@ int fast_func()
     // Skip function body
     EOL_allowed = true;
     CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
-    if (is_EOL == false){
+    if (is_EOL == false)
+    {
         return SYNTAX_ERROR;
     }
     is_EOL = false;
     int indent_count = 1;
-    while (indent_count){
-        if (token.token_type == TT_EOF){
+    while (indent_count)
+    {
+        if (token.token_type == TT_EOF)
+        {
             return SYNTAX_ERROR;
         }
-        if (token.token_type == TT_OPEN_BRACES){
+        if (token.token_type == TT_OPEN_BRACES)
+        {
             indent_count++;
         }
-        if (token.token_type == TT_CLOSE_BRACES){
+        if (token.token_type == TT_CLOSE_BRACES)
+        {
             indent_count--;
         }
-        if (indent_count > 0){
+        if (indent_count > 0)
+        {
             NEXT();
         }
     }
@@ -841,184 +851,187 @@ int fast_func()
     return OK;
 }
 
-
-int fast_params(Symtable_item* function)
+int fast_params(Symtable_item *function)
 {
     switch (token.token_type)
     {
-        case TT_IDENTIFIER:
-            // Rule: <params> -> <param> <params_n>
-            CHECK_AND_CALL_FUNCTION(fast_param(function));
-            CHECK_AND_CALL_FUNCTION(fast_params_n(function));
-            return OK;
-        case TT_CLOSE_PARENTHESES:
-            // Rule: <params> -> eps
-            return OK;
-        default:
-            return SYNTAX_ERROR;
+    case TT_IDENTIFIER:
+        // Rule: <params> -> <param> <params_n>
+        CHECK_AND_CALL_FUNCTION(fast_param(function));
+        CHECK_AND_CALL_FUNCTION(fast_params_n(function));
+        return OK;
+    case TT_CLOSE_PARENTHESES:
+        // Rule: <params> -> eps
+        return OK;
+    default:
+        return SYNTAX_ERROR;
     }
 }
 
-int fast_param(Symtable_item* function)
+int fast_param(Symtable_item *function)
 {
     // Rule: <param> -> id <data_type>
     CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
     function->parameter_count++;
-    if (function->parameters == NULL){
-        function->parameters = malloc(sizeof(Parameter)*function->parameter_count);
-    } else {
-        function->parameters = realloc(function->parameters, sizeof(Parameter)*function->parameter_count);
+    if (function->parameters == NULL)
+    {
+        function->parameters = malloc(sizeof(Parameter) * function->parameter_count);
     }
-    function->parameters[function->parameter_count-1].identifier
-    = malloc(sizeof(*token.attribute.string)*strlen(token.attribute.string)+1);
-    strcpy(function->parameters[function->parameter_count-1].identifier, token.attribute.string);
-    switch (token.token_type) {
-        case TT_KEYWORD_FLOAT64:
-            function->parameters[function->parameter_count-1].dataType = DT_FLOAT;
-            break;
-        case TT_KEYWORD_INT:
-            function->parameters[function->parameter_count-1].dataType = DT_INT;
-            break;
-        case TT_KEYWORD_STRING:
-            function->parameters[function->parameter_count-1].dataType = DT_STRING;
-            break;
-        default:
-            return SYNTAX_ERROR;
+    else
+    {
+        function->parameters = realloc(function->parameters, sizeof(Parameter) * function->parameter_count);
+    }
+    function->parameters[function->parameter_count - 1].identifier = malloc(sizeof(*token.attribute.string) * strlen(token.attribute.string) + 1);
+    strcpy(function->parameters[function->parameter_count - 1].identifier, token.attribute.string);
+    switch (token.token_type)
+    {
+    case TT_KEYWORD_FLOAT64:
+        function->parameters[function->parameter_count - 1].dataType = DT_FLOAT;
+        break;
+    case TT_KEYWORD_INT:
+        function->parameters[function->parameter_count - 1].dataType = DT_INT;
+        break;
+    case TT_KEYWORD_STRING:
+        function->parameters[function->parameter_count - 1].dataType = DT_STRING;
+        break;
+    default:
+        return SYNTAX_ERROR;
     }
     NEXT();
     return OK;
 }
 
-int fast_params_n(Symtable_item* function)
+int fast_params_n(Symtable_item *function)
 {
     switch (token.token_type)
     {
-        case TT_CLOSE_PARENTHESES:
-            // Rule: <params_n> -> eps
-            return OK;
-        case TT_COMMA:
-            // Rule: <params_n> -> , <param> <params_n>
-            CHECK_AND_LOAD_TOKEN(TT_COMMA);
-            CHECK_AND_CALL_FUNCTION(fast_param(function));
-            CHECK_AND_CALL_FUNCTION(fast_params_n(function));
-            return OK;
-        default:
-            return SYNTAX_ERROR;
+    case TT_CLOSE_PARENTHESES:
+        // Rule: <params_n> -> eps
+        return OK;
+    case TT_COMMA:
+        // Rule: <params_n> -> , <param> <params_n>
+        CHECK_AND_LOAD_TOKEN(TT_COMMA);
+        CHECK_AND_CALL_FUNCTION(fast_param(function));
+        CHECK_AND_CALL_FUNCTION(fast_params_n(function));
+        return OK;
+    default:
+        return SYNTAX_ERROR;
     }
 }
 
-int fast_ret_types(Symtable_item* function)
+int fast_ret_types(Symtable_item *function)
 {
     switch (token.token_type)
     {
-        case TT_OPEN_PARENTHESES:
-            // Rule: <ret_types> -> ( <types> )
-            CHECK_AND_LOAD_TOKEN(TT_OPEN_PARENTHESES);
-            CHECK_AND_CALL_FUNCTION(fast_types(function));
-            CHECK_AND_LOAD_TOKEN(TT_CLOSE_PARENTHESES);
-            return OK;
-        case TT_OPEN_BRACES:
-            // Rule: <ret_types> -> eps
-            function->dataType[0] = DT_VOID;
-            function->return_values_count = 1;
-            return OK;
-        case TT_KEYWORD_INT:
-        case TT_KEYWORD_STRING:
-        case TT_KEYWORD_FLOAT64:
-            // Rule: <ret_types> -> <data_type>
-            switch (token.token_type)
-            {
-                case TT_KEYWORD_INT:
-                    // Rule: <data_type> -> int
-                    CHECK_AND_LOAD_TOKEN(TT_KEYWORD_INT);
-                    function->dataType[0] = DT_INT;
-                    function->return_values_count = 1;
-                    return OK;
-                case TT_KEYWORD_STRING:
-                    // Rule: <data_type> -> string
-                    CHECK_AND_LOAD_TOKEN(TT_KEYWORD_STRING);
-                    function->dataType[0] = DT_STRING;
-                    function->return_values_count = 1;
-                    return OK;
-                case TT_KEYWORD_FLOAT64:
-                    // Rule: <data_type> -> float
-                CHECK_AND_LOAD_TOKEN(TT_KEYWORD_FLOAT64);
-                    function->dataType[0] = DT_FLOAT;
-                    function->return_values_count = 1;
-                    return OK;
-                default:
-                    return SYNTAX_ERROR;
-            }
-            return OK;
-        default:
-            return SYNTAX_ERROR;
-    }
-}
-
-int fast_types(Symtable_item* function)
-{
-    switch (token.token_type)
-    {
-        case TT_CLOSE_PARENTHESES:
-            // Rule: <types> -> eps
-            function->dataType[0] = DT_VOID;
-            function->return_values_count = 1;
-            return OK;
-        case TT_KEYWORD_INT:
-        case TT_KEYWORD_STRING:
-        case TT_KEYWORD_FLOAT64:
-            // Rule: <types> -> <data_type> <types_n>
-            CHECK_AND_CALL_FUNCTION(fast_state_data_type(function));
-            CHECK_AND_CALL_FUNCTION(fast_types_n(function));
-            return OK;
-        default:
-            return SYNTAX_ERROR;
-    }
-}
-
-int fast_state_data_type(Symtable_item* function)
-{
-    // Max 10 return values supported
-    if (function->return_values_count == 10){
-        return INTERNAL_ERROR;
-    }
-    switch (token.token_type)
-    {
+    case TT_OPEN_PARENTHESES:
+        // Rule: <ret_types> -> ( <types> )
+        CHECK_AND_LOAD_TOKEN(TT_OPEN_PARENTHESES);
+        CHECK_AND_CALL_FUNCTION(fast_types(function));
+        CHECK_AND_LOAD_TOKEN(TT_CLOSE_PARENTHESES);
+        return OK;
+    case TT_OPEN_BRACES:
+        // Rule: <ret_types> -> eps
+        function->dataType[0] = DT_VOID;
+        function->return_values_count = 1;
+        return OK;
+    case TT_KEYWORD_INT:
+    case TT_KEYWORD_STRING:
+    case TT_KEYWORD_FLOAT64:
+        // Rule: <ret_types> -> <data_type>
+        switch (token.token_type)
+        {
         case TT_KEYWORD_INT:
             // Rule: <data_type> -> int
             CHECK_AND_LOAD_TOKEN(TT_KEYWORD_INT);
-            function->dataType[function->return_values_count++] = DT_INT;
+            function->dataType[0] = DT_INT;
+            function->return_values_count = 1;
             return OK;
         case TT_KEYWORD_STRING:
             // Rule: <data_type> -> string
             CHECK_AND_LOAD_TOKEN(TT_KEYWORD_STRING);
-            function->dataType[function->return_values_count++] = DT_STRING;
+            function->dataType[0] = DT_STRING;
+            function->return_values_count = 1;
             return OK;
         case TT_KEYWORD_FLOAT64:
             // Rule: <data_type> -> float
             CHECK_AND_LOAD_TOKEN(TT_KEYWORD_FLOAT64);
-            function->dataType[function->return_values_count++] = DT_FLOAT;
+            function->dataType[0] = DT_FLOAT;
+            function->return_values_count = 1;
             return OK;
         default:
             return SYNTAX_ERROR;
+        }
+        return OK;
+    default:
+        return SYNTAX_ERROR;
     }
 }
 
-int fast_types_n(Symtable_item* function)
+int fast_types(Symtable_item *function)
 {
     switch (token.token_type)
     {
-        case TT_CLOSE_PARENTHESES:
-            // Rule: <types_n> -> eps
-            return OK;
-        case TT_COMMA:
-            // Rule: <types_n> -> , <data_type> <types_n>
-            CHECK_AND_LOAD_TOKEN(TT_COMMA);
-            CHECK_AND_CALL_FUNCTION(fast_state_data_type(function));
-            CHECK_AND_CALL_FUNCTION(fast_types_n(function));
-            return OK;
-        default:
-            return SYNTAX_ERROR;
+    case TT_CLOSE_PARENTHESES:
+        // Rule: <types> -> eps
+        function->dataType[0] = DT_VOID;
+        function->return_values_count = 1;
+        return OK;
+    case TT_KEYWORD_INT:
+    case TT_KEYWORD_STRING:
+    case TT_KEYWORD_FLOAT64:
+        // Rule: <types> -> <data_type> <types_n>
+        CHECK_AND_CALL_FUNCTION(fast_state_data_type(function));
+        CHECK_AND_CALL_FUNCTION(fast_types_n(function));
+        return OK;
+    default:
+        return SYNTAX_ERROR;
+    }
+}
+
+int fast_state_data_type(Symtable_item *function)
+{
+    // Max 10 return values supported
+    if (function->return_values_count == 10)
+    {
+        return INTERNAL_ERROR;
+    }
+    switch (token.token_type)
+    {
+    case TT_KEYWORD_INT:
+        // Rule: <data_type> -> int
+        CHECK_AND_LOAD_TOKEN(TT_KEYWORD_INT);
+        function->dataType[function->return_values_count++] = DT_INT;
+        return OK;
+    case TT_KEYWORD_STRING:
+        // Rule: <data_type> -> string
+        CHECK_AND_LOAD_TOKEN(TT_KEYWORD_STRING);
+        function->dataType[function->return_values_count++] = DT_STRING;
+        return OK;
+    case TT_KEYWORD_FLOAT64:
+        // Rule: <data_type> -> float
+        CHECK_AND_LOAD_TOKEN(TT_KEYWORD_FLOAT64);
+        function->dataType[function->return_values_count++] = DT_FLOAT;
+        return OK;
+    default:
+        return SYNTAX_ERROR;
+    }
+}
+
+int fast_types_n(Symtable_item *function)
+{
+    switch (token.token_type)
+    {
+    case TT_CLOSE_PARENTHESES:
+        // Rule: <types_n> -> eps
+        return OK;
+    case TT_COMMA:
+        // Rule: <types_n> -> , <data_type> <types_n>
+        CHECK_AND_LOAD_TOKEN(TT_COMMA);
+        CHECK_AND_CALL_FUNCTION(fast_state_data_type(function));
+        CHECK_AND_CALL_FUNCTION(fast_types_n(function));
+        return OK;
+    default:
+        return SYNTAX_ERROR;
     }
 }
 
@@ -1027,7 +1040,8 @@ int parse()
     Symstack_init(&symtable_stack);
     // First data gathering pass
     return_code = fill_function_table();
-    if (return_code != OK){
+    if (return_code != OK)
+    {
         return return_code;
     }
     NEXT();
