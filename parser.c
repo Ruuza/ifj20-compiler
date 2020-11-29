@@ -88,13 +88,6 @@ Symstack* symtable_stack;
         }                            \
     }
 
-// Create new empty Local symtable
-Symtable_node_ptr* init_localtable() {
-    Symtable_node_ptr(localtable) = NULL;
-    Symtable_init(&localtable);
-    return NULL;
-}
-
 // Init nonterminal states:
 int Func_param_n();
 int For_declr();
@@ -182,7 +175,6 @@ int Id_n()
 
 int Else()
 {
-    Symtable_node_ptr localtab_else;
     switch (token.token_type)
     {
         // case TT_IDENTIFIER:
@@ -201,13 +193,15 @@ int Else()
         CHECK_AND_LOAD_TOKEN(TT_KEYWORD_ELSE);
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
-        localtab_else = (Symtable_node_ptr) init_localtable();
+        Symtable_node_ptr localtab_else = NULL;
+        Symtable_init(&localtab_else);
         Symstack_insert(symtable_stack, localtab_else);
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
 
         CHECK_AND_LOAD_TOKEN(TT_CLOSE_BRACES);
-        Symtable_dispose(&localtab_else);
+        Symtable_node_ptr helper = Symstack_pop(symtable_stack);
+        Symtable_dispose(&helper);
 
         return OK;
         break;
@@ -387,8 +381,9 @@ int Func_param()
 
 int State()
 {
-    Symtable_node_ptr localtab_for;
-    Symtable_node_ptr localtab_if;
+    Symtable_node_ptr localtab_if_for = NULL;
+    Symtable_init(&localtab_if_for);
+    Symtable_node_ptr stack_pop_helper = NULL;
     switch (token.token_type)
     {
     case TT_IDENTIFIER:
@@ -434,13 +429,13 @@ int State()
         CHECK_AND_CALL_FUNCTION(Expresion());
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
-        localtab_if = (Symtable_node_ptr) init_localtable();
-        Symstack_insert(symtable_stack, localtab_if);
+        Symstack_insert(symtable_stack, localtab_if_for);
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
 
         CHECK_AND_LOAD_TOKEN(TT_CLOSE_BRACES);
-        Symtable_dispose(&localtab_if);
+        stack_pop_helper = Symstack_pop(symtable_stack);
+        Symtable_dispose(&stack_pop_helper);
         CHECK_AND_CALL_FUNCTION(Else());
 
         return OK;
@@ -459,13 +454,13 @@ int State()
         CHECK_AND_CALL_FUNCTION(Expresion());
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
-        localtab_for = (Symtable_node_ptr) init_localtable();
-        Symstack_insert(symtable_stack, localtab_for);
+        Symstack_insert(symtable_stack, localtab_if_for);
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
 
         CHECK_AND_LOAD_TOKEN(TT_CLOSE_BRACES);
-        Symtable_dispose(&localtab_for);
+        stack_pop_helper = Symstack_pop(symtable_stack);
+        Symtable_dispose(&stack_pop_helper);
         return OK;
         break;
 
@@ -677,8 +672,6 @@ int Params()
 int Func()
 {
     // Rule: <func> -> func id ( <params> ) <ret_types> { <stat_list> }
-    Symtable_node_ptr localtab_func;
-
     EOL_allowed = false;
 
     CHECK_AND_LOAD_TOKEN(TT_KEYWORD_FUNC);
@@ -703,7 +696,8 @@ int Func()
     EOL_allowed = true;
 
     CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
-    localtab_func = (Symtable_node_ptr) init_localtable();
+    Symtable_node_ptr localtab_func = NULL;
+    Symtable_init(&localtab_func);
     Symstack_insert(symtable_stack, localtab_func);
 
     if (is_EOL != true)
@@ -721,7 +715,8 @@ int Func()
     generate_func_bottom(function_identifier);
     free(function_identifier);
 
-    Symtable_dispose(&localtab_func);
+    Symtable_node_ptr helper = Symstack_pop(symtable_stack);
+    Symtable_dispose(&helper);
     return OK;
 }
 
@@ -760,7 +755,7 @@ int Preamble()
     CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
     char* package_id_name = "main";
     if (strcmp(token.attribute.string, package_id_name) != 0){
-        return SEMANTIC_ERROR_UNDEFINED_VARIABLE;
+        return SEMANTIC_ERROR_OTHERS;
     }
 
     if (is_EOL != true)
