@@ -17,6 +17,7 @@
 #include "string.h"
 #include "precedence-stack.h"
 #include "precedence.c"
+#include "symstack.h"
 
 bool is_EOL = false;
 bool EOL_allowed = true;
@@ -27,6 +28,7 @@ Token prev_token;
 Symtable_node_ptr global_symbol_table;
 Symtable_item* current_function;
 int param_counter;
+Symstack* symtable_stack;
 
 // Load next token, check the return code and check if EOL is allowed.
 #define NEXT()                              \
@@ -191,10 +193,15 @@ int Else()
         CHECK_AND_LOAD_TOKEN(TT_KEYWORD_ELSE);
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
+        Symtable_node_ptr localtab_else = NULL;
+        Symtable_init(&localtab_else);
+        Symstack_insert(symtable_stack, localtab_else);
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
 
         CHECK_AND_LOAD_TOKEN(TT_CLOSE_BRACES);
+        Symtable_node_ptr helper = Symstack_pop(symtable_stack);
+        Symtable_dispose(&helper);
 
         return OK;
         break;
@@ -214,11 +221,9 @@ int Expresion()
     Precedence_sign table;
     precedenceStackInit(&stack);
     bool firstCycle = true;
-    prev_token = a;
-    while ((!(precedenceStackEmpty(&stack) && b.attribute.string == "$")) || firstCycle == false)
-    {
-        if (firstCycle)
-        {
+    prev_token = a ;
+    while (!((a.attribute.string/*top*/ != "$") && (b.attribute.string != "$") && (firstCycle == false))){
+        if (firstCycle){
             firstCycle = false;
         }
         precedenceStackTopTerminal(&stack, &a);
@@ -278,9 +283,16 @@ int Declr()
     // Rule: <declr> -> id := <expr>
     CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
 
+    char* identifier_name = malloc(sizeof(*token.attribute.string)*strlen(token.attribute.string)+1);;
+    Symtable_item* identifier = create_item();
+    identifier->parameters->identifier = identifier_name;
+
     CHECK_AND_LOAD_TOKEN(TT_DECLARATION_ASSIGNMENT);
 
     CHECK_AND_CALL_FUNCTION(Expresion());
+    Symtable_node_ptr helper = Symstack_head(symtable_stack);
+    Symtable_insert(&helper, identifier_name, identifier);
+    free(identifier_name);
 
     return OK;
 }
@@ -370,10 +382,12 @@ int Func_param()
 
 int State()
 {
+    Symtable_node_ptr localtab_if_for = NULL;
+    Symtable_init(&localtab_if_for);
+    Symtable_node_ptr stack_pop_helper = NULL;
     switch (token.token_type)
     {
     case TT_IDENTIFIER:
-
         prev_token = token;
         NEXT();
         second_token = true;
@@ -416,11 +430,13 @@ int State()
         CHECK_AND_CALL_FUNCTION(Expresion());
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
+        Symstack_insert(symtable_stack, localtab_if_for);
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
 
         CHECK_AND_LOAD_TOKEN(TT_CLOSE_BRACES);
-
+        stack_pop_helper = Symstack_pop(symtable_stack);
+        Symtable_dispose(&stack_pop_helper);
         CHECK_AND_CALL_FUNCTION(Else());
 
         return OK;
@@ -439,10 +455,13 @@ int State()
         CHECK_AND_CALL_FUNCTION(Expresion());
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
+        Symstack_insert(symtable_stack, localtab_if_for);
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
 
         CHECK_AND_LOAD_TOKEN(TT_CLOSE_BRACES);
+        stack_pop_helper = Symstack_pop(symtable_stack);
+        Symtable_dispose(&stack_pop_helper);
         return OK;
         break;
 
@@ -654,7 +673,6 @@ int Params()
 int Func()
 {
     // Rule: <func> -> func id ( <params> ) <ret_types> { <stat_list> }
-
     EOL_allowed = false;
 
     CHECK_AND_LOAD_TOKEN(TT_KEYWORD_FUNC);
@@ -669,6 +687,7 @@ int Func()
     CHECK_AND_LOAD_TOKEN(TT_OPEN_PARENTHESES);
 
     param_counter = 0;
+
     CHECK_AND_CALL_FUNCTION(Params());
 
     CHECK_AND_LOAD_TOKEN(TT_CLOSE_PARENTHESES);
@@ -678,6 +697,9 @@ int Func()
     EOL_allowed = true;
 
     CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
+    Symtable_node_ptr localtab_func = NULL;
+    Symtable_init(&localtab_func);
+    Symstack_insert(symtable_stack, localtab_func);
 
     if (is_EOL != true)
     {
@@ -693,6 +715,10 @@ int Func()
     CHECK_AND_LOAD_TOKEN(TT_CLOSE_BRACES);
     generate_func_bottom(function_identifier);
     free(function_identifier);
+
+    Symtable_node_ptr helper = Symstack_pop(symtable_stack);
+    Symtable_dispose(&helper);
+ 
     return OK;
 }
 
@@ -729,6 +755,10 @@ int Preamble()
     EOL_allowed = true;
 
     CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
+    char* package_id_name = "main";
+    if (strcmp(token.attribute.string, package_id_name) != 0){
+        return SEMANTIC_ERROR_OTHERS;
+    }
 
     if (is_EOL != true)
     {
@@ -1007,6 +1037,7 @@ int fast_types_n(Symtable_item *function)
 
 int parse()
 {
+    Symstack_init(&symtable_stack);
     // First data gathering pass
     return_code = fill_function_table();
     if (return_code != OK)
@@ -1017,5 +1048,6 @@ int parse()
 
     // Second full pass
     return_code = Start();
+    Symstack_dispose(&symtable_stack);
     return return_code;
 }
