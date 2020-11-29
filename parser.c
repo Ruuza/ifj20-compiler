@@ -28,10 +28,7 @@ Token prev_token;
 Symtable_node_ptr global_symbol_table;
 Symtable_item* current_function;
 int param_counter;
-Symtable_node_ptr localtab_for, localtab_else, localtab_if, localtab_func, localtab_types;
 Symstack* symtable_stack;
-enum recognize_localtable{none = 0, local_else = 1, local_if = 2, local_for = 3, local_func = 4, local_types = 5};
-int using_this_localtable = none;
 
 // Load next token, check the return code and check if EOL is allowed.
 #define NEXT()                                \
@@ -185,6 +182,7 @@ int Id_n()
 
 int Else()
 {
+    Symtable_node_ptr localtab_else;
     switch (token.token_type)
     {
         // case TT_IDENTIFIER:
@@ -201,21 +199,15 @@ int Else()
         // Rule: <else> -> else { <stat_list> }
 
         CHECK_AND_LOAD_TOKEN(TT_KEYWORD_ELSE);
-        int previous_using_this_localtable = using_this_localtable;
-        using_this_localtable = local_else;
-        char* function_name = "else";
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
         localtab_else = (Symtable_node_ptr) init_localtable();
-        Symtable_item* else_item = create_item();
-        Symtable_insert(&localtab_else, function_name, else_item);
+        Symstack_insert(symtable_stack, localtab_else);
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
 
         CHECK_AND_LOAD_TOKEN(TT_CLOSE_BRACES);
-        Symstack_insert(symtable_stack, localtab_else);
         Symtable_dispose(&localtab_else);
-        using_this_localtable = previous_using_this_localtable;
 
         return OK;
         break;
@@ -303,18 +295,8 @@ int Declr()
     CHECK_AND_LOAD_TOKEN(TT_DECLARATION_ASSIGNMENT);
 
     CHECK_AND_CALL_FUNCTION(Expresion());
-
-    if (using_this_localtable == local_else) { //function
-        Symtable_insert(&localtab_else, identifier->parameters->identifier, identifier);
-    } else if (using_this_localtable == local_if) {
-        Symtable_insert(&localtab_if, identifier->parameters->identifier, identifier);
-    } else if (using_this_localtable == local_for) {
-        Symtable_insert(&localtab_for, identifier->parameters->identifier, identifier);
-    } else if (using_this_localtable == local_func) {
-        Symtable_insert(&localtab_func, identifier->parameters->identifier, identifier);
-    } else if (using_this_localtable == local_types) {
-        Symtable_insert(&localtab_types, identifier->parameters->identifier, identifier);
-    }
+    Symtable_node_ptr helper = Symstack_head(symtable_stack);
+    Symtable_insert(&helper, identifier_name, identifier);
     free(identifier_name);
 
     return OK;
@@ -405,8 +387,8 @@ int Func_param()
 
 int State()
 {
-    int previous_using_this_localtable = using_this_localtable;
-    char* function_name = "none";
+    Symtable_node_ptr localtab_for;
+    Symtable_node_ptr localtab_if;
     switch (token.token_type)
     {
     case TT_IDENTIFIER:
@@ -448,23 +430,17 @@ int State()
         // Rule: <state> -> if <expr> { <stat_list> } <else>
 
         CHECK_AND_LOAD_TOKEN(TT_KEYWORD_IF);
-        previous_using_this_localtable = using_this_localtable;
-        using_this_localtable = local_if;
-        function_name = "if";
 
         CHECK_AND_CALL_FUNCTION(Expresion());
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
         localtab_if = (Symtable_node_ptr) init_localtable();
-        Symtable_item* if_item = create_item();
-        Symtable_insert(&localtab_func, function_name, if_item);
+        Symstack_insert(symtable_stack, localtab_if);
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
 
         CHECK_AND_LOAD_TOKEN(TT_CLOSE_BRACES);
-        Symstack_insert(symtable_stack, localtab_if);
         Symtable_dispose(&localtab_if);
-        using_this_localtable = previous_using_this_localtable;
         CHECK_AND_CALL_FUNCTION(Else());
 
         return OK;
@@ -473,9 +449,6 @@ int State()
     case TT_KEYWORD_FOR:
         // Rule: <state> -> for <for_declr> <expr> ; <expr> { <stat_list> }
         CHECK_AND_LOAD_TOKEN(TT_KEYWORD_FOR);
-        previous_using_this_localtable = using_this_localtable;
-        using_this_localtable = local_for;
-        function_name = "for";
 
         CHECK_AND_CALL_FUNCTION(For_declr());
 
@@ -487,15 +460,12 @@ int State()
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
         localtab_for = (Symtable_node_ptr) init_localtable();
-        Symtable_item* for_item = create_item();
-        Symtable_insert(&localtab_for, function_name, for_item);
+        Symstack_insert(symtable_stack, localtab_for);
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
 
         CHECK_AND_LOAD_TOKEN(TT_CLOSE_BRACES);
-        Symstack_insert(symtable_stack, localtab_for);
         Symtable_dispose(&localtab_for);
-        using_this_localtable = previous_using_this_localtable;
         return OK;
         break;
 
@@ -707,6 +677,7 @@ int Params()
 int Func()
 {
     // Rule: <func> -> func id ( <params> ) <ret_types> { <stat_list> }
+    Symtable_node_ptr localtab_func;
 
     EOL_allowed = false;
 
@@ -718,11 +689,6 @@ int Func()
     strcpy(function_identifier, token.attribute.string);
     generate_func_top(token.attribute.string);
     generate_return_values(current_function);
-
-    int previous_using_this_localtable = using_this_localtable;
-    using_this_localtable = local_func;
-    char* function_name = malloc(sizeof(*token.attribute.string)*strlen(token.attribute.string)+1);
-    strcpy(function_name, token.attribute.string);
 
     CHECK_AND_LOAD_TOKEN(TT_OPEN_PARENTHESES);
 
@@ -738,8 +704,7 @@ int Func()
 
     CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
     localtab_func = (Symtable_node_ptr) init_localtable();
-    Symtable_item* function = create_item();
-    Symtable_insert(&localtab_func, function_name, function);
+    Symstack_insert(symtable_stack, localtab_func);
 
     if (is_EOL != true)
     {
@@ -756,10 +721,7 @@ int Func()
     generate_func_bottom(function_identifier);
     free(function_identifier);
 
-    Symstack_insert(symtable_stack, localtab_func);
     Symtable_dispose(&localtab_func);
-    using_this_localtable = previous_using_this_localtable;
-
     return OK;
 }
 
