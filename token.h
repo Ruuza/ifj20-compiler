@@ -53,6 +53,10 @@ typedef enum {
     TT_CLOSE_PARENTHESES,
     TT_OPEN_BRACES,
     TT_CLOSE_BRACES,
+
+    //Precedence meta-tokens
+    TT_NONTERMINAL,
+    TT_STOP,
 } Token_type;
 
 union Token_attribute{

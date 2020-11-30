@@ -1,11 +1,10 @@
 #ifndef IFJ20C_SYMTABLESTACK_H
 #define IFJ20C_SYMTABLESTACK_H
 
-#include "token.h"
 #include "symtable.h"
 
 typedef struct{
-    Symtable_item** stack;
+    Symtable_node_ptr* stack;
     int capacity;
     int top;
 } Symstack;
@@ -22,7 +21,7 @@ void Symstack_init(Symstack** symstack);
  * @param symstack
  * @return Symtable_node_ptr or NULL if stack is empty
  */
-Symtable_item* Symstack_pop(Symstack* symstack);
+Symtable_node_ptr Symstack_pop(Symstack* symstack);
 
 /**
  * Inserts symtable to the top of the stack. Stack capacity grows if necessary.
@@ -30,7 +29,7 @@ Symtable_item* Symstack_pop(Symstack* symstack);
  * @param symstack
  * @param symtable
  */
-void Symstack_insert(Symstack* symstack, Symtable_item* symtable);
+void Symstack_insert(Symstack* symstack, Symtable_node_ptr symtable);
 
 /**
  * Returns pointer to Symtable_node_ptr at top of the stack
@@ -38,7 +37,7 @@ void Symstack_insert(Symstack* symstack, Symtable_item* symtable);
  * @param symstack
  * @return non-owning Symbol table pointer
  */
-Symtable_item* Symstack_head(Symstack *symstack);
+Symtable_node_ptr Symstack_head(Symstack *symstack);
 
 /**
  * Frees all stack memory and memory of stored objects

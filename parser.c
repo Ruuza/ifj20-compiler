@@ -15,9 +15,8 @@
 #include "codegen.h"
 #include "symtable.h"
 #include "string.h"
-#include "precedence-stack.h"
 #include "precedence.c"
-#include "symstack.h"
+#include "symtablestack.h"
 
 bool is_EOL = false;
 bool EOL_allowed = true;
@@ -215,67 +214,7 @@ int Else()
 
 int Expresion()
 {
-    Token a, b;
-    a.token_type, b.token_type = TT_ERR;
-    tPrecedenceStack stack;
-    Precedence_sign table;
-    precedenceStackInit(&stack);
-    bool firstCycle = true;
-    prev_token = a ;
-    while (!((a.attribute.string/*top*/ != "$") && (b.attribute.string != "$") && (firstCycle == false))){
-        if (firstCycle){
-            firstCycle = false;
-        }
-        precedenceStackTopTerminal(&stack, &a);
-        if (token.token_type == TT_COMMA || token.token_type == TT_OPEN_BRACES || token.token_type == TT_SEMICOLON || is_EOL)
-        {
-            b.token_type = TT_ERR;
-            b.attribute.string = "$";
-        }
-        else
-        {
-            b = token;
-        }
 
-        Precedence_sign c = precedence_lookup(a.token_type, b.token_type);
-
-        bool isShift = false;
-        bool isNonterminal = false;
-        Token skippingToken;
-
-        switch (c)
-        {
-        case PRECEDENCE_L:
-            precedenceStackPush(&stack, a, true, false);
-            precedenceStackPush(&stack, b, false, false);
-            NEXT();
-            break;
-        case PRECEDENCE_G:
-
-            // REDUCE
-
-            do
-            {
-                precedenceStackTop(&stack, &skippingToken, &isShift, &isNonterminal);
-                precedenceStackPop(&stack);
-
-                if (precedenceStackEmpty(&stack))
-                {
-                    return SYNTAX_ERROR;
-                }
-            } while (isShift != true);
-
-            break;
-        case PRECEDENCE_E:
-            precedenceStackPush(&stack, b, false, false);
-            NEXT();
-            break;
-        default:
-            return SYNTAX_ERROR;
-            break;
-        }
-    }
-    return OK;
 }
 
 int Declr()
