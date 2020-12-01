@@ -11,6 +11,13 @@ typedef struct{
 } Symstack;
 
 /**
+ * True if symbol stack is empty
+ * @param symstack
+ * @return
+ */
+bool Symstack_empty(Symstack* symstack);
+
+/**
  * Initializes symbol stack
  * @param symstack
  */

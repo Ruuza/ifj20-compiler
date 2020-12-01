@@ -56,6 +56,7 @@ typedef enum {
 
     //Precedence meta-tokens
     TT_NONTERMINAL,
+    TT_SHIFT,
     TT_STOP,
 } Token_type;
 

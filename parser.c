@@ -16,6 +16,7 @@
 #include "symtable.h"
 #include "string.h"
 #include "precedence.c"
+#include "symstack.h"
 #include "symtablestack.h"
 
 bool is_EOL = false;
@@ -212,21 +213,173 @@ int Else()
     }
 }
 
+
+Symtable_item* create_shift(){
+    Symtable_item* shift = create_item();
+    shift->token.token_type = TT_SHIFT;
+    return shift;
+}
+
+Symtable_item* find_terminal_top(Symstack* symstack){
+    for(int i = symstack->top; i >= 0; i--){
+        Symtable_item* item = *symstack->stack+symstack->top;
+        switch (item->token.token_type) {
+            case TT_SHIFT:
+            case TT_NONTERMINAL:
+                break;
+            default:
+                return item;
+        }
+    }
+}
+
+Symtable_item* insert_shift(Symstack* symstack, Symtable_item* item){
+    Symstack* temp_stack;
+    Symstack_init(&temp_stack);
+    for(int i = symstack->top; i > 0; i--){
+        Symtable_item* current_item = *(symstack->stack+i);
+        if (current_item == item){
+            Symstack_insert(symstack, create_shift());
+            break;
+        } else {
+            Symstack_insert(temp_stack, Symstack_pop(symstack));
+        }
+    }
+    while (!Symstack_empty(symstack)){
+        Symstack_insert(symstack, Symstack_pop(temp_stack));
+    }
+    Symstack_dispose(&temp_stack);
+}
+
+int shift_position(Symstack* symstack){
+    for(int i = symstack->top; i > 0; i--){
+        Symtable_item* current_item = *(symstack->stack+i);
+        if (current_item->token.token_type != TT_STOP){
+            continue;
+        }
+        return i;
+    }
+    return -1;
+}
+
+int parse_expresion_rule(Symstack* symstack, int shift_pos){
+    int current_pos = shift_pos+1;
+    if (current_pos > symstack->top){
+        return SYNTAX_ERROR;
+    }
+    switch ((*symstack->stack+current_pos)->token.token_type) {
+        case TT_NONTERMINAL:
+            current_pos = shift_pos+1;
+            if (current_pos > symstack->top){
+                return SYNTAX_ERROR;
+            }
+            switch ((*symstack->stack+current_pos)->token.token_type) {
+                case TT_PLUS:
+                    //E -> E+E
+                    break;
+                case TT_MINUS:
+                    //E -> E-E
+                    break;
+                case TT_ASTERISK:
+                    //E -> E*E
+                    break;
+                case TT_SLASH:
+                    //E -> E/E
+                    break;
+                case TT_LESS:
+                case TT_LESS_OR_EQUALS:
+                case TT_GREATER:
+                case TT_GREATER_OR_EQUALS:
+                case TT_EQUALS:
+                    // E -> E compare E
+                default:
+                    return SYNTAX_ERROR;
+            }
+        case TT_OPEN_PARENTHESES:
+            //E -> (E)
+        case TT_IDENTIFIER:
+            // E -> id
+            // MAYBE FUNEXP?
+        default:
+            return SYNTAX_ERROR;
+    }
+}
+
+bool is_precedence_end(Token_type tokenType){
+    switch (tokenType) {
+        case TT_IDENTIFIER:
+        case TT_STRING_LITERAl:
+        case TT_INTEGER_LITERAL:
+        case TT_FLOATING_LITERAL:
+        case TT_PLUS:
+        case TT_MINUS:
+        case TT_ASTERISK:
+        case TT_SLASH:
+        case TT_SEMICOLON:
+        case TT_EQUALS:
+        case TT_NOT_EQUALS:
+        case TT_LESS_OR_EQUALS:
+        case TT_GREATER_OR_EQUALS:
+        case TT_LESS:
+        case TT_GREATER:
+            return false;
+        default:
+            return true;
+    }
+}
+
 int Expresion()
 {
-    /*
     Symstack* symstack;
+    Symstack_init(&symstack);
     Symtable_item* stop = create_item();
-    stop->tokenType = TT_STOP;
-    Symtable_stack_insert(symstack, stop);
+    stop->token.token_type = TT_STOP;
+    Symstack_insert(symstack, stop);
+    int shift_pos;
 
+    bool end_found = false;
+    Symtable_item* a, *b;
+    NEXT()
+    do{
+        a = find_terminal_top(symstack);
+        b = create_item();
+        if (is_precedence_end(token.token_type)){
+            b->token.token_type = TT_STOP;
+            end_found = true;
+        } else {
+            b->token.token_type = token.token_type;
+        }
+        switch (precedence_lookup(a->token.token_type, b->token.token_type)) {
+            case PRECEDENCE_E:
+                Symstack_insert(symstack, b);
+                if (!end_found){
+                    NEXT()
+                }
+                break;
+            case PRECEDENCE_L:
+                insert_shift(symstack, a);
+                Symstack_insert(symstack, b);
+                if (!end_found){
+                    NEXT()
+                }
+                break;
+            case PRECEDENCE_G:
+                shift_pos = shift_position(symstack);
+                if (shift_pos != -1){
+                    parse_expresion_rule(symstack, shift_pos);
+                } else{
+                    return SYNTAX_ERROR;
+                }
+                free_symtable_item(b);
+                break;
+            case PRECEDENCE_X:
+                return SYNTAX_ERROR;
+        }
+    } while (!end_found && find_terminal_top(symstack)->token.token_type != TT_STOP);
 
-    while(1){
-
-    }
-
-    return 0;
-     */
+    Symstack_dispose(&symstack);
+    free_symtable_item(stop);
+    return OK;
 }
 
 int Declr()

@@ -1,7 +1,7 @@
 #include "scanner.h"
 #include <string.h>
 #include "symtable.h"
-#include "symstack.h"
+#include "symtablestack.h"
 #include "testData.h"
 #include "parser.h"
 #include "codegen.h"
@@ -116,7 +116,7 @@ int test_symtable(){
 int test_symstack(){
     // Initialize stack
     Symstack* stack;
-    Symstack_init(&stack);
+    Symtable_stack_init(&stack);
 
     // Init symbol table with 1 item
     Symtable_node_ptr symtable;
@@ -128,33 +128,33 @@ int test_symstack(){
     Symtable_init(&symtable2);
 
     // Insert symbol tables onto the stack
-    Symstack_insert(stack, symtable);
+    Symtable_stack_insert(stack, symtable);
     if (stack->top != 0){
         fprintf(stderr, "Stack top is %d an should be 0", stack->top);
         return 1;
     }
-    Symstack_insert(stack, symtable2);
+    Symtable_stack_insert(stack, symtable2);
     if (stack->top != 1){
         fprintf(stderr, "Stack top is %d an should be 1", stack->top);
         return 1;
     }
 
     // Pop out one
-    free_symtable_node(Symstack_pop(stack));
+    free_symtable_node(Symtable_stack_pop(stack));
     // Pop out second symbol table and check that it is the same we put in
-    Symtable_node_ptr popped_symtable = Symstack_pop(stack);
+    Symtable_node_ptr popped_symtable = Symtable_stack_pop(stack);
     if (popped_symtable != symtable){
-        fprintf(stderr, "Symstack_pop returned wrong table");
+        fprintf(stderr, "Symtable_stack_pop returned wrong table");
         return 1;
     }
     free_symtable_node(popped_symtable);
     // Check that the stack is now empty
-    if (Symstack_head(stack) != NULL){
+    if (Symtable_stack_head(stack) != NULL){
         fprintf(stderr, "Symstack is not empty");
         return 1;
     }
     // Cleanup
-    Symstack_dispose(&stack);
+    Symtable_stack_dispose(&stack);
     return 0;
 }
 
@@ -206,6 +206,14 @@ int main(){
     if(test_symstack()){
         printf("TEST 7 FAILED\n");
         return 1;
+    }
+    if (test_return_value("package main\n\nfunc oznuk(test string) (int) {\n    return 0\n}\n"
+                          "\n"
+                          "func main () int {\n"
+                          ""
+                          "}", 0)){
+        return 1;
+
     }
     return 0;
 }

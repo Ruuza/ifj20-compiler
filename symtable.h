@@ -25,6 +25,7 @@ typedef struct {
 } Parameter;
 
 typedef struct {
+    Token token;
     Data_type dataType[MAXIMUM_RETURN_VALUES];
     int return_values_count;
     Parameter* parameters;
