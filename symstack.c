@@ -23,13 +23,13 @@ Symtable_item* Symstack_pop(Symstack* symstack){
     return topPtr;
 }
 
-void Symstack_insert(Symstack* symstack, Symtable_item* symtable){
+void Symstack_insert(Symstack* symstack, Symtable_item* item){
     if (symstack->top == symstack->capacity){
         symstack->capacity = (int)(symstack->capacity * 1.5);
         symstack->stack = realloc(symstack->stack, sizeof(Symtable_item*)*symstack->capacity);
     }
     symstack->top++;
-    *(symstack->stack+symstack->top) = symtable;
+    *(symstack->stack+symstack->top) = item;
 }
 
 Symtable_item* Symstack_head(Symstack* symstack){

@@ -113,9 +113,9 @@ int test_symtable(){
     return 0;
 }
 
-int test_symstack(){
+int test_symtable_stack(){
     // Initialize stack
-    Symstack* stack;
+    Symtable_stack* stack;
     Symtable_stack_init(&stack);
 
     // Init symbol table with 1 item
@@ -203,7 +203,7 @@ int main(){
         printf("TEST 6 FAILED\n");
         return 1;
     }
-    if(test_symstack()){
+    if(test_symtable_stack()){
         printf("TEST 7 FAILED\n");
         return 1;
     }
