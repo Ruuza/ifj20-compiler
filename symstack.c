@@ -19,6 +19,7 @@ Symtable_item* Symstack_pop(Symstack* symstack){
         return NULL;
     }
     Symtable_item* topPtr = *(symstack->stack+symstack->top);
+    *(symstack->stack+symstack->top) = NULL;
     symstack->top--;
     return topPtr;
 }
@@ -42,7 +43,6 @@ Symtable_item* Symstack_head(Symstack* symstack){
 void Symstack_dispose(Symstack** symstack){
     for (int i = 0; i <= (*symstack)->top; ++i) {
         free_symtable_item(*((*symstack)->stack+i));
-        free(*((*symstack)->stack+i));
         *((*symstack)->stack+i) = NULL;
     }
     free((*symstack)->stack);

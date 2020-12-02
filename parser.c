@@ -297,11 +297,11 @@ int parse_expresion_rule(Symstack* symstack, int shift_pos){
     }
     switch ((*(symstack->stack+current_pos))->token.token_type) {
         case TT_NONTERMINAL:
-            current_pos = shift_pos+1;
+            current_pos++;
             if (current_pos > symstack->top){
                 return SYNTAX_ERROR;
             }
-            switch ((*symstack->stack+current_pos)->token.token_type) {
+            switch ((*(symstack->stack+current_pos))->token.token_type) {
                 case TT_PLUS:
                     //E -> E+E
                     return parse_expression_binary_operation(symstack, current_pos);
@@ -413,7 +413,6 @@ int Expresion()
     } while (!(end_found && find_terminal_top(symstack)->token.token_type == TT_STOP));
 
     Symstack_dispose(&symstack);
-    free_symtable_item(stop);
     return OK;
 }
 
