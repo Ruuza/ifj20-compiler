@@ -9,12 +9,12 @@ int generate_inputs();
 int generate_inputi();
 int generate_inputf();
 int generate_print();
-int generate_int2float(int number);
-int generate_float2int(float number);
-int generate_len(char* str);
-int generate_subst(char* string, int begin, int size);
-int generate_ord(char* string, int number);
-int generate_chr(int number);
+int generate_int2float();
+int generate_float2int();
+int generate_len();
+int generate_substr();
+int generate_ord();
+int generate_chr();
 
 int set_code_output(FILE *file) {
     if (file == NULL){
@@ -85,7 +85,7 @@ int generate_func_bottom(char* function_identifier){
     return 0;
 }
 
-bool character_ok(int character) { //
+bool chceck_character_ok(int character) { //
     if ((character >= 48 && character <= 57) || (character >= 65 && character <= 90) ||     //0-9, a-z
         (character >= 97 && character <= 122) || (character == 95) || (character == 45) ||  //A-Z, _, -
         (character >= 36 && character <= 38) || (character == 42) || (character == 33) ||   //$,%,&,*,!
@@ -94,6 +94,31 @@ bool character_ok(int character) { //
     } else {
         return false;
     }
+}
+
+int generate_builtin_function(char *function_identifier) {
+    if (strcmp(function_identifier, "inputs") == 0) {
+        return generate_inputs();
+    } else if (strcmp(function_identifier, "inputi") == 0){
+        return generate_inputi();
+    } else if (strcmp(function_identifier, "inputf") == 0){
+        return generate_inputf();
+    } else if (strcmp(function_identifier, "print") == 0){
+        return generate_print();
+    } else if (strcmp(function_identifier, "int2float") == 0){
+        return generate_int2float();
+    } else if (strcmp(function_identifier, "float2int") == 0){
+        return generate_float2int();
+    } else if (strcmp(function_identifier, "len") == 0){
+        return generate_len();
+    } else if (strcmp(function_identifier, "substr") == 0){
+        return generate_substr();
+    } else if (strcmp(function_identifier, "ord") == 0){
+        return generate_ord();
+    } else if (strcmp(function_identifier, "chr") == 0){
+        return generate_chr();
+    } else
+        return 99; //NO built-in function
 }
 
 int generate_inputs() {
@@ -158,56 +183,67 @@ int generate_inputf() {
     return 0;
 }
 
-int generate_print(int params_count) {     /// NEMA INPUT IBA VYPIS
+int generate_print() {
     char *function_identifier = "print";
     fprintf(code_output_file, "LABEL $%s\n", function_identifier);
     fprintf(code_output_file, "PUSHFRAME\n");
-    for (int i = 1; i <= params_count; i++) {
-        fprintf(code_output_file, "WRITE LF@%s%d\n", function_identifier, i);
-    }
+    fprintf(code_output_file, "JUMPIFEQ $end LF@%%1 string@stop\n");
+    fprintf(code_output_file, "WRITE LF@%%1\n");
+    fprintf(code_output_file, "JUMPIFEQ $end LF@%%2 string@stop\n");
+    fprintf(code_output_file, "WRITE LF@%%2\n");
+    fprintf(code_output_file, "JUMPIFEQ $end LF@%%3 string@stop\n");
+    fprintf(code_output_file, "WRITE LF@%%3\n");
+    fprintf(code_output_file, "JUMPIFEQ $end LF@%%4 string@stop\n");
+    fprintf(code_output_file, "WRITE LF@%%4\n");
+    fprintf(code_output_file, "JUMPIFEQ $end LF@%%5 string@stop\n");
+    fprintf(code_output_file, "WRITE LF@%%5\n");
+    fprintf(code_output_file, "JUMPIFEQ $end LF@%%6 string@stop\n");
+    fprintf(code_output_file, "WRITE LF@%%6\n");
+    fprintf(code_output_file, "JUMPIFEQ $end LF@%%7 string@stop\n");
+    fprintf(code_output_file, "WRITE LF@%%7\n");
+    fprintf(code_output_file, "JUMPIFEQ $end LF@%%8 string@stop\n");
+    fprintf(code_output_file, "WRITE LF@%%8\n");
+    fprintf(code_output_file, "JUMPIFEQ $end LF@%%9 string@stop\n");
+    fprintf(code_output_file, "WRITE LF@%%9\n");
+    fprintf(code_output_file, "JUMPIFEQ $end LF@%%10 string@stop\n");
+    fprintf(code_output_file, "WRITE LF@%%10\n");
+    fprintf(code_output_file, "JUMP $end\n");
+    fprintf(code_output_file, "LABEL $end\n");
     fprintf(code_output_file, "POPFRAME\n");
     fprintf(code_output_file, "RETURN\n");
     return 0;
 }
 
-int generate_int2float(int number) {
+int generate_int2float() {
     char *function_identifier = "int2float";
     fprintf(code_output_file, "LABEL $%s\n", function_identifier);
     fprintf(code_output_file, "PUSHFRAME\n");
     fprintf(code_output_file, "DEFVAR LF@%%retval1\n");
     fprintf(code_output_file, "MOVE LF@%%retval1 nil@nil\n");
     fprintf(code_output_file, "DEFVAR LF@%s\n", function_identifier);
-    fprintf(code_output_file, "MOVE LF@%s int@%d\n", function_identifier, number);
+    fprintf(code_output_file, "MOVE LF@%s LF@%%1\n", function_identifier);
     fprintf(code_output_file, "INT2FLOAT LF@%%retval1 LF@%s\n", function_identifier);
     fprintf(code_output_file, "POPFRAME\n");
     fprintf(code_output_file, "RETURN\n");
     return 0;
 }
 
-int generate_float2int(float number) {
+int generate_float2int() {
     char *function_identifier = "float2int";
     fprintf(code_output_file, "LABEL $%s\n", function_identifier);
     fprintf(code_output_file, "PUSHFRAME\n");
     fprintf(code_output_file, "DEFVAR LF@%%retval1\n");
     fprintf(code_output_file, "MOVE LF@%%retval1 nil@nil\n");
     fprintf(code_output_file, "DEFVAR LF@%s\n", function_identifier);
-    fprintf(code_output_file, "MOVE LF@%s float@%a\n", function_identifier, number);
+    fprintf(code_output_file, "MOVE LF@%s LF@%%1\n", function_identifier);
     fprintf(code_output_file, "FLOAT2INT LF@%%retval1 LF@%s\n", function_identifier);
     fprintf(code_output_file, "POPFRAME\n");
     fprintf(code_output_file, "RETURN\n");
     return 0;
 }
 
-int generate_len(char *str) {
+int generate_len() {
     char *function_identifier = "len";
-    char *str_modify = malloc(sizeof(str));
-    int helper_counter = 0;
-    for (int i = 0; i < strlen(str); i++) {
-        if (character_ok(str[i]) != false) { // character_ok=false - nepovoleny znak
-            str_modify[helper_counter] = str[i];
-            helper_counter++;
-        }
-    }
     fprintf(code_output_file, "LABEL $%s\n", function_identifier);
     fprintf(code_output_file, "PUSHFRAME\n");
     fprintf(code_output_file, "DEFVAR LF@%%retval1\n");
@@ -215,14 +251,14 @@ int generate_len(char *str) {
     fprintf(code_output_file, "MOVE LF@%%retval1 nil@nil\n");
     fprintf(code_output_file, "MOVE LF@%%retval2 int@0\n");
     fprintf(code_output_file, "DEFVAR LF@%s\n", function_identifier);
-    fprintf(code_output_file, "MOVE LF@%s string@%s\n", function_identifier, str_modify);
+    fprintf(code_output_file, "MOVE LF@%s LF@%%1\n", function_identifier);
     fprintf(code_output_file, "STRLEN LF@%%retval1 LF@%s\n", function_identifier);
     fprintf(code_output_file, "POPFRAME\n");
     fprintf(code_output_file, "RETURN\n");
     return 0;
 }
 
-int generate_substr(char *string, int begin, int size) {
+int generate_substr() { //string=LF@%1, begin=LF@%2, size=LF@%3
     char *function_identifier = "substr";
     fprintf(code_output_file, "LABEL $%s\n", function_identifier);
     fprintf(code_output_file, "PUSHFRAME\n");
@@ -231,11 +267,11 @@ int generate_substr(char *string, int begin, int size) {
     fprintf(code_output_file, "MOVE LF@%%retval1 nil@nil\n");
     fprintf(code_output_file, "MOVE LF@%%retval2 int@0\n");
     fprintf(code_output_file, "DEFVAR LF@%s_string\n", function_identifier);
-    fprintf(code_output_file, "MOVE LF@%s_string string@%s\n", function_identifier, string);
+    fprintf(code_output_file, "MOVE LF@%s_string LF@%%1\n", function_identifier);//read first param
     fprintf(code_output_file, "DEFVAR LF@%s_begin\n", function_identifier);
-    fprintf(code_output_file, "MOVE LF@%s_begin int@%d\n", function_identifier, begin);
+    fprintf(code_output_file, "MOVE LF@%s_begin LF@%%2\n", function_identifier);//read second param
     fprintf(code_output_file, "DEFVAR LF@%s_size\n", function_identifier);
-    fprintf(code_output_file, "MOVE LF@%s_size int@%d\n", function_identifier, size);
+    fprintf(code_output_file, "MOVE LF@%s_size LF@%%3\n", function_identifier);//read third param
     fprintf(code_output_file, "DEFVAR LF@LT1return\n");
     fprintf(code_output_file, "LT LF@LT1return LF@%s_begin int@0\n", function_identifier);
     fprintf(code_output_file, "JUMPIFEQ $%s_exit LF@LT1return bool@true\n", function_identifier); //begin < 0
@@ -308,7 +344,7 @@ int generate_substr(char *string, int begin, int size) {
     return 0;
 }
 
-int generate_ord(char *string, int number) {
+int generate_ord() { //string=LF@%1, number=LF@%2
     char *function_identifier = "ord";
     fprintf(code_output_file, "LABEL $%s_exit\n", function_identifier);
     fprintf(code_output_file, "MOVE LF@%%retval2 int@1\n");
@@ -321,9 +357,9 @@ int generate_ord(char *string, int number) {
     fprintf(code_output_file, "MOVE LF@%%retval1 nil@nil\n");
     fprintf(code_output_file, "MOVE LF@%%retval2 int@0\n");
     fprintf(code_output_file, "DEFVAR LF@%s%d\n", function_identifier, 1);
-    fprintf(code_output_file, "MOVE LF@%s%d string@%s\n", function_identifier, 1, string);
+    fprintf(code_output_file, "MOVE LF@%s%d LF@%%1\n", function_identifier, 1);
     fprintf(code_output_file, "DEFVAR LF@%s%d\n", function_identifier, 2);
-    fprintf(code_output_file, "MOVE LF@%s%d int@%d\n", function_identifier, 2, number);
+    fprintf(code_output_file, "MOVE LF@%s%d LF@%%2\n", function_identifier, 2);
     fprintf(code_output_file, "DEFVAR LF@LTreturn\n");
     fprintf(code_output_file, "LT LF@LTreturn LF@%s%d int@0\n", function_identifier, 2);
     fprintf(code_output_file, "JUMPIFEQ $%s_exit LF@LTreturn bool@true\n", function_identifier);
@@ -341,7 +377,7 @@ int generate_ord(char *string, int number) {
     return 0;
 }
 
-int generate_chr(int number) {
+int generate_chr() {
     char *function_identifier = "chr";
     fprintf(code_output_file, "LABEL $%s_exit\n", function_identifier);
     fprintf(code_output_file, "MOVE LF@%%retval2 int@1\n");
@@ -354,7 +390,7 @@ int generate_chr(int number) {
     fprintf(code_output_file, "MOVE LF@%%retval1 nil@nil\n");
     fprintf(code_output_file, "MOVE LF@%%retval2 int@0\n");
     fprintf(code_output_file, "DEFVAR LF@%s%d\n", function_identifier, 1);
-    fprintf(code_output_file, "MOVE LF@%s%d int@%d\n", function_identifier, 1, number);
+    fprintf(code_output_file, "MOVE LF@%s%d LF@%%1\n", function_identifier, 1);
     fprintf(code_output_file, "DEFVAR LF@GTreturn\n"); // test number > 255 || number < 0
     fprintf(code_output_file, "DEFVAR LF@LTreturn\n");
     fprintf(code_output_file, "LT LF@LTreturn LF@%s%d int@0\n", function_identifier, 1);
