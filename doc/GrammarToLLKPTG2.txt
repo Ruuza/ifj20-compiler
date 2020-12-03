@@ -33,12 +33,14 @@ DATA_TYPE : int
 STATL : /*eps*/
  | STATE STATL ;
 
-STATE  : DECLR
+STATE  : id STATE_ID
  | if EXPR open_bracket STATL close_bracket ELSE 
  | for FOR_DECLR EXPR semicolon EXPR open_bracket STATL close_bracket
- | return EXPR 
- | id open_parenthesis FUNC_PARAM close_parenthesis
- | id ID_N equals EXPR ;
+ | return EXPR;
+
+STATE_ID: DECLR
+ | open_parenthesis FUNC_PARAM close_parenthesis
+ | ID_N equals EXPR ;
 
 ID_N : /*eps*/
  | comma id ID_N ;
@@ -49,7 +51,7 @@ FUNC_PARAM : /*eps*/
 FUNC_PARAM_N : /*eps*/
  | comma EXPR FUNC_PARAM_N ;
 
-DECLR : id prirazeni EXPR ;
+DECLR : prirazeni EXPR ;
 
 FOR_DECLR : DECLR semicolon
  | semicolon ;
