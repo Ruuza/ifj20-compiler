@@ -27,6 +27,7 @@ Token token;
 Token prev_token;
 Symtable_node_ptr global_symbol_table;
 Symtable_item* current_function;
+int global_temporary_variable_counter = 0;
 int param_counter;
 Symtable_stack* symtable_stack;
 
@@ -271,6 +272,14 @@ int parse_expression_binary_operation(Symstack* symstack, int operator_pos){
     Symtable_item* operator_item = Symstack_pop(symstack);
     Symtable_item* left_item = Symstack_pop(symstack);
     Symtable_item* shift = Symstack_pop(symstack);
+
+    char* nonterminal_identifier = malloc(sizeof(char)*20);
+    sprintf(nonterminal_identifier, "LF@expr-var%d", global_temporary_variable_counter++);
+    generate_arithmetic_operation(operator_item->token.token_type,nonterminal_identifier, left_item->token.attribute.string,
+                                  right_item->token.attribute.string);
+    free(left_item->token.attribute.string);
+    left_item->token.attribute.string = nonterminal_identifier;
+
     if (shift->token.token_type != TT_SHIFT){
         return INTERNAL_ERROR;
     }
@@ -279,12 +288,57 @@ int parse_expression_binary_operation(Symstack* symstack, int operator_pos){
     return OK;
 }
 
+int convert_int_to_literal(char* out, int64_t integer){
+    sprintf(out, "int@%ld", integer);
+    return 0;
+}
+
+int convert_double_to_literal(char* out, double double_num){
+    sprintf(out, "float@%a", double_num);
+    return 0;
+}
+
+int convert_string_to_literal(char* out, char* string){
+    //TODO
+    return 0;
+}
+
 int parse_literal(Symstack* symstack){
     Symtable_item* literal = Symstack_pop(symstack);
     Symtable_item* shift = Symstack_pop(symstack);
 
-    literal->token.token_type = TT_NONTERMINAL;
+    char* nonterminal_identifier = malloc(sizeof(char)*20);
+    sprintf(nonterminal_identifier, "LF@expr-var%d", global_temporary_variable_counter++);
 
+    char* value_literal;
+    switch (literal->token.token_type) {
+        case TT_FLOATING_LITERAL:
+            literal->dataType[0] = DT_FLOAT;
+            value_literal = malloc(sizeof(char)*150);
+            convert_double_to_literal(value_literal, literal->token.attribute.floating);
+            generate_move(nonterminal_identifier, value_literal);
+            break;
+        case TT_STRING_LITERAl:
+            literal->dataType[0] = DT_STRING;
+            value_literal = malloc(sizeof(char)); //TODO
+            /*
+            convert_string_to_literal(value_literal, literal->token.attribute.string);
+            generate_move(nonterminal_identifier, value_literal);
+            */
+            break;
+        case TT_INTEGER_LITERAL:
+            literal->dataType[0] = DT_INT;
+            value_literal = malloc(sizeof(char)*150);
+            convert_int_to_literal(value_literal, literal->token.attribute.integer);
+            generate_move(nonterminal_identifier, value_literal);
+            break;
+        default:
+            return SYNTAX_ERROR;
+    }
+    literal->token.token_type = TT_NONTERMINAL;
+    literal->token.attribute.string = nonterminal_identifier;
+
+    free(value_literal);
     free_symtable_item(shift);
     Symstack_insert(symstack, literal);
     return OK;
@@ -383,6 +437,7 @@ int Expresion()
             end_found = true;
         } else {
             b->token.token_type = token.token_type;
+            b->token.attribute = token.attribute;
         }
         switch (precedence_lookup(a->token.token_type, b->token.token_type)) {
             case PRECEDENCE_E:
@@ -411,6 +466,11 @@ int Expresion()
                 return SYNTAX_ERROR;
         }
     } while (!(end_found && find_terminal_top(symstack)->token.token_type == TT_STOP));
+
+    // Move result to known variable
+    Symtable_item* result = Symstack_pop(symstack);
+    generate_move("LF@expr-result", result->token.attribute.string);
+    free(result);
 
     Symstack_dispose(&symstack);
     return OK;

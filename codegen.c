@@ -402,3 +402,29 @@ int generate_chr() {
     fprintf(code_output_file, "RETURN\n");
     return 0;
 }
+
+int generate_move(char* identifier, char* source){
+    fprintf(code_output_file, "MOVE %s %s\n", identifier, source);
+    return 0;
+}
+
+int generate_arithmetic_operation(Token_type operation, char* identifier, char* lhs, char* rhs){
+    switch (operation) {
+        case TT_PLUS:
+            fprintf(code_output_file, "ADD %s %s %s\n", identifier, lhs, rhs);
+            break;
+        case TT_MINUS:
+            fprintf(code_output_file, "SUB %s %s %s\n", identifier, lhs, rhs);
+            break;
+        case TT_ASTERISK:
+            fprintf(code_output_file, "MUL %s %s %s\n", identifier, lhs, rhs);
+            break;
+        case TT_SLASH:
+            fprintf(code_output_file, "IDIV %s %s %s\n", identifier, lhs, rhs);
+            break;
+        default:
+            fprintf(stderr, "Unsupported operation!");
+            return 1;
+    }
+    return 0;
+}
