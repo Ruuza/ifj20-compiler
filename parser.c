@@ -298,8 +298,34 @@ int convert_double_to_literal(char* out, double double_num){
     return 0;
 }
 
-int convert_string_to_literal(char* out, char* string){
-    //TODO
+int convert_string_to_literal(char* out, const char* string, size_t length){
+    size_t out_max_length = length * 1.5;
+    sprintf(out, "string@");
+    int out_position = 7; //set position after prefix
+    for (int i = 0; i < length; i++) {
+        if (out_position+5 > out_max_length){ // If there is chance to not fit allocate more space
+            out_max_length = out_max_length*1.2;
+            if (out_max_length < 10){ // At least 10 chars minimum for small string edge cases
+                out_max_length = 10;
+            }
+            if (realloc(out, out_max_length) == NULL){
+                return -1;
+            }
+        }
+        char ch = string[i];
+        if (ch >= 0 && ch <= 32 || ch == 35 || ch == 92){
+            char escape_sequence[5];
+            sprintf(escape_sequence, "\\%.3d", ch);
+            out[out_position++] = escape_sequence[0];
+            out[out_position++] = escape_sequence[1];
+            out[out_position++] = escape_sequence[2];
+            out[out_position++] = escape_sequence[3];
+        } else {
+            out[out_position] = ch;
+            out_position++;
+        }
+    }
+    out[out_position] = 0; //ending null byte
     return 0;
 }
 
@@ -320,11 +346,10 @@ int parse_literal(Symstack* symstack){
             break;
         case TT_STRING_LITERAl:
             literal->dataType[0] = DT_STRING;
-            value_literal = malloc(sizeof(char)); //TODO
-            /*
-            convert_string_to_literal(value_literal, literal->token.attribute.string);
+            size_t length = strlen(literal->token.attribute.string);
+            value_literal = malloc(sizeof(char)*(size_t)(length*1.5));
+            convert_string_to_literal(value_literal, literal->token.attribute.string, length);
             generate_move(nonterminal_identifier, value_literal);
-            */
             break;
         case TT_INTEGER_LITERAL:
             literal->dataType[0] = DT_INT;
