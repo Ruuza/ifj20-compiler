@@ -42,8 +42,8 @@ int generate_func_top(char* function_identifier){
 }
 
 int generate_func_param(char* param_identifier, int param_pos){
-    fprintf(code_output_file, "DEFVAR LF@%s%d\n", param_identifier, param_pos);
-    fprintf(code_output_file,"MOVE LF@%s%d  LF@%%%d\n", param_identifier, param_pos, param_pos);
+    fprintf(code_output_file, "DEFVAR LF@%s\n", param_identifier);
+    fprintf(code_output_file,"MOVE LF@%s LF@%%%d\n", param_identifier, param_pos);
     return 0;
 }
 
@@ -403,8 +403,8 @@ int generate_chr() {
     return 0;
 }
 
-int generate_move(char* identifier, char* source){
-    fprintf(code_output_file, "MOVE %s %s\n", identifier, source);
+int generate_move(char* dest_frame, char* identifier, char* source_frame, char* source){
+    fprintf(code_output_file, "MOVE %s%s %s%s\n", dest_frame, identifier, source_frame, source);
     return 0;
 }
 

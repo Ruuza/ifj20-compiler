@@ -336,7 +336,7 @@ int parse_literal(Symstack* symstack){
     Symtable_item* shift = Symstack_pop(symstack);
 
     char* nonterminal_identifier = malloc(sizeof(char)*20);
-    sprintf(nonterminal_identifier, "LF@expr-var%d", global_temporary_variable_counter++);
+    sprintf(nonterminal_identifier, "expr-var%d", global_temporary_variable_counter++);
 
     char* value_literal;
     switch (literal->token.token_type) {
@@ -344,20 +344,20 @@ int parse_literal(Symstack* symstack){
             literal->dataType[0] = DT_FLOAT;
             value_literal = malloc(sizeof(char)*150);
             convert_double_to_literal(value_literal, literal->token.attribute.floating);
-            generate_move(nonterminal_identifier, value_literal);
+            generate_move("LF@", nonterminal_identifier, "", value_literal);
             break;
         case TT_STRING_LITERAl:
             literal->dataType[0] = DT_STRING;
             size_t length = strlen(literal->token.attribute.string);
             value_literal = malloc(sizeof(char)*(size_t)(length*1.5));
             convert_string_to_literal(value_literal, literal->token.attribute.string, length);
-            generate_move(nonterminal_identifier, value_literal);
+            generate_move("LF@", nonterminal_identifier, "", value_literal);
             break;
         case TT_INTEGER_LITERAL:
             literal->dataType[0] = DT_INT;
             value_literal = malloc(sizeof(char)*150);
             convert_int_to_literal(value_literal, literal->token.attribute.integer);
-            generate_move(nonterminal_identifier, value_literal);
+            generate_move("LF@", nonterminal_identifier, "", value_literal);
             break;
         default:
             return SYNTAX_ERROR;
@@ -368,6 +368,40 @@ int parse_literal(Symstack* symstack){
     free(value_literal);
     free_symtable_item(shift);
     Symstack_insert(symstack, literal);
+    return OK;
+}
+
+int parse_expression_parentheses(Symstack* symstack){
+    Symtable_item* right_parentheses = Symstack_pop(symstack);
+    Symtable_item* nonterminal = Symstack_pop(symstack);
+    Symtable_item* left_parentheses = Symstack_pop(symstack);
+    Symtable_item* shift = Symstack_pop(symstack);
+
+    free_symtable_item(right_parentheses);
+    free_symtable_item(left_parentheses);
+    free_symtable_item(shift);
+    Symstack_insert(symstack, nonterminal);
+    return OK;
+}
+
+int parse_expression_id(Symstack* symstack){
+    Symtable_item* identifier = Symstack_pop(symstack);
+    Symtable_item* shift = Symstack_pop(symstack);
+    identifier->token.token_type = TT_NONTERMINAL;
+
+    char* local_name =
+            malloc(sizeof(char) * strlen(identifier->token.attribute.string) + 1);
+    strcpy(local_name, token.attribute.string);
+    /*
+    Symtable_item* variable = Symtable_stack_lookup(symtable_stack, local_name);
+    if (variable == NULL){
+        return SEMANTIC_ERROR_UNDEFINED_VARIABLE;
+    }
+    identifier->dataType[0] = variable->dataType[0];
+    */
+
+    free_symtable_item(shift);
+    Symstack_insert(symstack, identifier);
     return OK;
 }
 
@@ -407,10 +441,10 @@ int parse_expresion_rule(Symstack* symstack, int shift_pos){
             }
         case TT_OPEN_PARENTHESES:
             //E -> (E)
+            return parse_expression_parentheses(symstack);
         case TT_INTEGER_LITERAL:
         case TT_STRING_LITERAl:
         case TT_FLOATING_LITERAL:
-            // E -> literal (merge with id?)
             return parse_literal(symstack);
         case TT_IDENTIFIER:
             // E -> id
@@ -424,6 +458,8 @@ int parse_expresion_rule(Symstack* symstack, int shift_pos){
 
 bool is_precedence_end(Token_type tokenType){
     switch (tokenType) {
+        case TT_OPEN_PARENTHESES:
+        case TT_CLOSE_PARENTHESES:
         case TT_IDENTIFIER:
         case TT_STRING_LITERAl:
         case TT_INTEGER_LITERAL:
@@ -497,7 +533,6 @@ int Expresion()
     // Move result to known variable
     Symtable_item* result = Symstack_pop(symstack);
     Symstack_insert(expression_result_stack, result);
-    generate_move("LF@expr-result", result->token.attribute.string);
 
     Symstack_dispose(&symstack);
     return OK;
@@ -822,8 +857,11 @@ int Stat_list()
     switch (token.token_type)
     {
     case TT_IDENTIFIER:
+        break;
     case TT_KEYWORD_IF:
+        break;
     case TT_KEYWORD_FOR:
+        break;
     case TT_KEYWORD_RETURN:
         // Rule: <statl> -> <state> <stat_list>
         CHECK_AND_CALL_FUNCTION(State());
@@ -852,7 +890,6 @@ int Stat_list()
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
         return OK;
-        break;
     case TT_CLOSE_BRACES:
         // Rule: <statl> -> eps
 
@@ -955,9 +992,6 @@ int Func()
     EOL_allowed = true;
 
     CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
-    Symtable_node_ptr localtab_func = NULL;
-    Symtable_init(&localtab_func);
-    Symtable_stack_insert(symtable_stack, localtab_func);
 
     if (is_EOL != true)
     {

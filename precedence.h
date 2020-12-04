@@ -21,8 +21,8 @@ Precedence_sign precedence_table[7][7] = {
         //|:----:|:---:|:---:|:-:|:-:|:-:|:-:|:-:|
         /*| +,- */{ G  ,  L  , L , G , L , G , G },
         /*| *,/ */{ G  ,  G  , L , G , L , G , G },
-        /*|  (  */{ G  ,  G  , G , E , L , G , X },
-        /*|  )  */{ L  ,  L  , X , G , X , G , G },
+        /*|  (  */{ L  ,  L  , L , E , L , G , X },
+        /*|  )  */{ G  ,  G  , X , G , X , G , G },
         /*|  i  */{ G  ,  G  , X , G , X , G , G },
         /*|  r  */{ L  ,  L  , L , L , L , X , G },
         /*|  $  */{ L  ,  L  , L , X , L , X , X },
