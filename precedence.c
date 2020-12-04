@@ -13,6 +13,7 @@ typedef enum{
 Precedence_table_index to_precedence_index(Token_type tokenType){
     switch (tokenType) {
         case TT_IDENTIFIER:
+        case TT_NONTERMINAL:
         case TT_STRING_LITERAl:
         case TT_INTEGER_LITERAL:
         case TT_FLOATING_LITERAL:

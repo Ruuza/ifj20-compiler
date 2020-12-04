@@ -15,7 +15,8 @@ add_library(libifj20c
         symstack.c symstack.h
         symtablestack.c symtablestack.h
         precedence.c precedence.h
-        codegen.c codegen.h)
+        codegen.c codegen.h
+        token_stack.c token_stack.h)
 
 # IFJ20C Tests
 add_executable(test_libifj20c test_main.c)
