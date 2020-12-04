@@ -433,13 +433,11 @@ int parse_expression_id(Symstack *symstack)
     char *local_name =
         malloc(sizeof(char) * strlen(identifier->token.attribute.string) + 1);
     strcpy(local_name, token.attribute.string);
-    /*
     Symtable_item* variable = Symtable_stack_lookup(symtable_stack, local_name);
     if (variable == NULL){
         return SEMANTIC_ERROR_UNDEFINED_VARIABLE;
     }
     identifier->dataType[0] = variable->dataType[0];
-    */
 
     free_symtable_item(shift);
     Symstack_insert(symstack, identifier);
@@ -493,7 +491,8 @@ int parse_expresion_rule(Symstack *symstack, int shift_pos)
     case TT_FLOATING_LITERAL:
         return parse_literal(symstack);
     case TT_IDENTIFIER:
-        // E -> id
+        // E -> id+
+        return parse_expression_id(symstack);
         // MAYBE FUNEXP?
         break;
     default:
@@ -629,8 +628,7 @@ int Declr()
     CHECK_AND_LOAD_TOKEN(TT_DECLARATION_ASSIGNMENT);
 
     CHECK_AND_CALL_FUNCTION(Expresion());
-    Symtable_node_ptr helper = Symtable_stack_head(symtable_stack);
-    Symtable_insert(&helper, identifier_name, identifier);
+    Symtable_insert(Symtable_stack_head(symtable_stack), identifier_name, identifier);
     free(identifier_name);
 
     return OK;
@@ -1049,6 +1047,11 @@ int Func()
 
     CHECK_AND_LOAD_TOKEN(TT_KEYWORD_FUNC);
 
+    // Create function scope
+    Symtable_node_ptr func;
+    Symtable_init(&func);
+    Symtable_stack_insert(symtable_stack, func);
+
     CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
     char *function_identifier = malloc(sizeof(*token.attribute.string) * strlen(token.attribute.string) + 1);
     current_function = Symtable_search(global_symbol_table, token.attribute.string);
@@ -1061,6 +1064,17 @@ int Func()
     param_counter = 0;
 
     CHECK_AND_CALL_FUNCTION(Params());
+
+    // Fill function scope with parameters
+    for (int i = 0; i < current_function->parameter_count; ++i) {
+        Symtable_item* param = create_item();
+        param->token.token_type = TT_IDENTIFIER;
+        param->dataType[0] = current_function->parameters[i].dataType;
+        param->token.attribute.string = malloc(sizeof(char)*(strlen(current_function->parameters[i].identifier)+1));
+        strcpy(param->token.attribute.string, current_function->parameters[i].identifier);
+        Symtable_node_ptr* head = Symtable_stack_head(symtable_stack);
+        Symtable_insert(head, param->token.attribute.string, param);
+    }
 
     CHECK_AND_LOAD_TOKEN(TT_CLOSE_PARENTHESES);
 

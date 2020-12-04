@@ -37,7 +37,15 @@ void Symtable_stack_insert(Symtable_stack* symstack, Symtable_node_ptr symtable)
  * @param symstack
  * @return non-owning Symbol table pointer
  */
-Symtable_node_ptr Symtable_stack_head(Symtable_stack *symstack);
+Symtable_node_ptr* Symtable_stack_head(Symtable_stack *symstack);
+
+/**
+ * Descends symbol stats and searches for variable
+ * @param symtableStack
+ * @param identifier
+ * @return found variable or null
+ */
+Symtable_item* Symtable_stack_lookup(Symtable_stack* symtableStack, char* identifier);
 
 /**
  * Frees all stack memory and memory of stored objects

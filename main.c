@@ -13,5 +13,8 @@ int main()
 
     set_code_output(stdout);
     int parse_return = parse();
+    //Force flush before exit
+    fflush(stdout);
+    fflush(stderr);
     return parse_return;
 }
