@@ -18,6 +18,7 @@
 #include "precedence.c"
 #include "symstack.h"
 #include "symtablestack.h"
+#include "token_stack.h"
 
 bool is_EOL = false;
 bool EOL_allowed = true;
@@ -31,6 +32,8 @@ int global_temporary_variable_counter = 0;
 int param_counter;
 Symstack *expression_result_stack;
 Symtable_stack *symtable_stack;
+
+tTokenStack idStack;
 
 // Load next token, check the return code and check if EOL is allowed.
 #define NEXT()                              \
@@ -156,6 +159,15 @@ int Id_n()
         // Rule: <id_n> -> , id <id_n>
 
         CHECK_AND_LOAD_TOKEN(TT_COMMA);
+
+        if (second_token)
+        {
+            tokenStackPush(&idStack, prev_token);
+        }
+        else
+        {
+            tokenStackPush(&idStack, token);
+        }
 
         CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
 
@@ -738,6 +750,16 @@ int State()
         else
         {
             // Rule: <state> -> id <Id_n> = <expr>
+
+            tokenStackInit(&idStack);
+            if (second_token)
+            {
+                tokenStackPush(&idStack, prev_token);
+            }
+            else
+            {
+                tokenStackPush(&idStack, token);
+            }
 
             CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
             CHECK_AND_CALL_FUNCTION(Id_n());
