@@ -18,6 +18,7 @@
 #include "precedence.c"
 #include "symstack.h"
 #include "symtablestack.h"
+#include "token_stack.h"
 
 bool is_EOL = false;
 bool EOL_allowed = true;
@@ -26,11 +27,13 @@ int return_code;
 Token token;
 Token prev_token;
 Symtable_node_ptr global_symbol_table;
-Symtable_item* current_function;
+Symtable_item *current_function;
 int global_temporary_variable_counter = 0;
 int param_counter;
-Symstack* expression_result_stack;
-Symtable_stack* symtable_stack;
+Symstack *expression_result_stack;
+Symtable_stack *symtable_stack;
+
+tTokenStack idStack;
 
 // Load next token, check the return code and check if EOL is allowed.
 #define NEXT()                              \
@@ -157,6 +160,15 @@ int Id_n()
 
         CHECK_AND_LOAD_TOKEN(TT_COMMA);
 
+        if (second_token)
+        {
+            tokenStackPush(&idStack, prev_token);
+        }
+        else
+        {
+            tokenStackPush(&idStack, token);
+        }
+
         CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
 
         CHECK_AND_CALL_FUNCTION(Id_n());
@@ -198,7 +210,7 @@ int Else()
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
         Symtable_node_ptr localtab_else = NULL;
         Symtable_init(&localtab_else);
-            Symtable_stack_insert(symtable_stack, localtab_else);
+        Symtable_stack_insert(symtable_stack, localtab_else);
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
 
@@ -216,49 +228,61 @@ int Else()
     }
 }
 
-
-Symtable_item* create_shift(){
-    Symtable_item* shift = create_item();
+Symtable_item *create_shift()
+{
+    Symtable_item *shift = create_item();
     shift->token.token_type = TT_SHIFT;
     return shift;
 }
 
-Symtable_item* find_terminal_top(Symstack* symstack){
-    for(int i = symstack->top; i >= 0; i--){
-        Symtable_item* item = *(symstack->stack+i);
-        switch (item->token.token_type) {
-            case TT_SHIFT:
-            case TT_NONTERMINAL:
-                break;
-            default:
-                return item;
+Symtable_item *find_terminal_top(Symstack *symstack)
+{
+    for (int i = symstack->top; i >= 0; i--)
+    {
+        Symtable_item *item = *(symstack->stack + i);
+        switch (item->token.token_type)
+        {
+        case TT_SHIFT:
+        case TT_NONTERMINAL:
+            break;
+        default:
+            return item;
         }
     }
     return NULL;
 }
 
-void insert_shift(Symstack* symstack, Symtable_item* item){
-    Symstack* temp_stack;
+void insert_shift(Symstack *symstack, Symtable_item *item)
+{
+    Symstack *temp_stack;
     Symstack_init(&temp_stack);
-    for(int i = symstack->top; i >= 0; i--){
-        Symtable_item* current_item = *(symstack->stack+i);
-        if (current_item == item){
+    for (int i = symstack->top; i >= 0; i--)
+    {
+        Symtable_item *current_item = *(symstack->stack + i);
+        if (current_item == item)
+        {
             Symstack_insert(symstack, create_shift());
             break;
-        } else {
+        }
+        else
+        {
             Symstack_insert(temp_stack, Symstack_pop(symstack));
         }
     }
-    while (!Symstack_empty(temp_stack)){
+    while (!Symstack_empty(temp_stack))
+    {
         Symstack_insert(symstack, Symstack_pop(temp_stack));
     }
     Symstack_dispose(&temp_stack);
 }
 
-int shift_position(Symstack* symstack){
-    for(int i = symstack->top; i > 0; i--){
-        Symtable_item* current_item = *(symstack->stack+i);
-        if (current_item->token.token_type != TT_SHIFT){
+int shift_position(Symstack *symstack)
+{
+    for (int i = symstack->top; i > 0; i--)
+    {
+        Symtable_item *current_item = *(symstack->stack + i);
+        if (current_item->token.token_type != TT_SHIFT)
+        {
             continue;
         }
         return i;
@@ -266,23 +290,26 @@ int shift_position(Symstack* symstack){
     return -1;
 }
 
-int parse_expression_binary_operation(Symstack* symstack, int operator_pos){
-    if (symstack->top != operator_pos+1){
+int parse_expression_binary_operation(Symstack *symstack, int operator_pos)
+{
+    if (symstack->top != operator_pos + 1)
+    {
         return SYNTAX_ERROR;
     }
-    Symtable_item* right_item = Symstack_pop(symstack);
-    Symtable_item* operator_item = Symstack_pop(symstack);
-    Symtable_item* left_item = Symstack_pop(symstack);
-    Symtable_item* shift = Symstack_pop(symstack);
+    Symtable_item *right_item = Symstack_pop(symstack);
+    Symtable_item *operator_item = Symstack_pop(symstack);
+    Symtable_item *left_item = Symstack_pop(symstack);
+    Symtable_item *shift = Symstack_pop(symstack);
 
-    char* nonterminal_identifier = malloc(sizeof(char)*20);
+    char *nonterminal_identifier = malloc(sizeof(char) * 20);
     sprintf(nonterminal_identifier, "LF@expr-var%d", global_temporary_variable_counter++);
-    generate_arithmetic_operation(operator_item->token.token_type,nonterminal_identifier, left_item->token.attribute.string,
+    generate_arithmetic_operation(operator_item->token.token_type, nonterminal_identifier, left_item->token.attribute.string,
                                   right_item->token.attribute.string);
     free(left_item->token.attribute.string);
     left_item->token.attribute.string = nonterminal_identifier;
 
-    if (shift->token.token_type != TT_SHIFT){
+    if (shift->token.token_type != TT_SHIFT)
+    {
         return INTERNAL_ERROR;
     }
     free_symtable_item(shift);
@@ -290,39 +317,49 @@ int parse_expression_binary_operation(Symstack* symstack, int operator_pos){
     return OK;
 }
 
-int convert_int_to_literal(char* out, int64_t integer){
+int convert_int_to_literal(char *out, int64_t integer)
+{
     sprintf(out, "int@%ld", integer);
     return 0;
 }
 
-int convert_double_to_literal(char* out, double double_num){
+int convert_double_to_literal(char *out, double double_num)
+{
     sprintf(out, "float@%a", double_num);
     return 0;
 }
 
-int convert_string_to_literal(char* out, const char* string, size_t length){
+int convert_string_to_literal(char *out, const char *string, size_t length)
+{
     size_t out_max_length = length * 1.5;
     sprintf(out, "string@");
     int out_position = 7; //set position after prefix
-    for (int i = 0; i < length; i++) {
-        if (out_position+5 > out_max_length){ // If there is chance to not fit allocate more space
-            out_max_length = out_max_length*1.2;
-            if (out_max_length < 10){ // At least 10 chars minimum for small string edge cases
+    for (int i = 0; i < length; i++)
+    {
+        if (out_position + 5 > out_max_length)
+        { // If there is chance to not fit allocate more space
+            out_max_length = out_max_length * 1.2;
+            if (out_max_length < 10)
+            { // At least 10 chars minimum for small string edge cases
                 out_max_length = 10;
             }
-            if (realloc(out, out_max_length) == NULL){
+            if (realloc(out, out_max_length) == NULL)
+            {
                 return -1;
             }
         }
         char ch = string[i];
-        if (ch >= 0 && ch <= 32 || ch == 35 || ch == 92){
+        if (ch >= 0 && ch <= 32 || ch == 35 || ch == 92)
+        {
             char escape_sequence[5];
             sprintf(escape_sequence, "\\%.3d", ch);
             out[out_position++] = escape_sequence[0];
             out[out_position++] = escape_sequence[1];
             out[out_position++] = escape_sequence[2];
             out[out_position++] = escape_sequence[3];
-        } else {
+        }
+        else
+        {
             out[out_position] = ch;
             out_position++;
         }
@@ -331,36 +368,38 @@ int convert_string_to_literal(char* out, const char* string, size_t length){
     return 0;
 }
 
-int parse_literal(Symstack* symstack){
-    Symtable_item* literal = Symstack_pop(symstack);
-    Symtable_item* shift = Symstack_pop(symstack);
+int parse_literal(Symstack *symstack)
+{
+    Symtable_item *literal = Symstack_pop(symstack);
+    Symtable_item *shift = Symstack_pop(symstack);
 
-    char* nonterminal_identifier = malloc(sizeof(char)*20);
+    char *nonterminal_identifier = malloc(sizeof(char) * 20);
     sprintf(nonterminal_identifier, "expr-var%d", global_temporary_variable_counter++);
 
-    char* value_literal;
-    switch (literal->token.token_type) {
-        case TT_FLOATING_LITERAL:
-            literal->dataType[0] = DT_FLOAT;
-            value_literal = malloc(sizeof(char)*150);
-            convert_double_to_literal(value_literal, literal->token.attribute.floating);
-            generate_move("LF@", nonterminal_identifier, "", value_literal);
-            break;
-        case TT_STRING_LITERAl:
-            literal->dataType[0] = DT_STRING;
-            size_t length = strlen(literal->token.attribute.string);
-            value_literal = malloc(sizeof(char)*(size_t)(length*1.5));
-            convert_string_to_literal(value_literal, literal->token.attribute.string, length);
-            generate_move("LF@", nonterminal_identifier, "", value_literal);
-            break;
-        case TT_INTEGER_LITERAL:
-            literal->dataType[0] = DT_INT;
-            value_literal = malloc(sizeof(char)*150);
-            convert_int_to_literal(value_literal, literal->token.attribute.integer);
-            generate_move("LF@", nonterminal_identifier, "", value_literal);
-            break;
-        default:
-            return SYNTAX_ERROR;
+    char *value_literal;
+    switch (literal->token.token_type)
+    {
+    case TT_FLOATING_LITERAL:
+        literal->dataType[0] = DT_FLOAT;
+        value_literal = malloc(sizeof(char) * 150);
+        convert_double_to_literal(value_literal, literal->token.attribute.floating);
+        generate_move("LF@", nonterminal_identifier, "", value_literal);
+        break;
+    case TT_STRING_LITERAl:
+        literal->dataType[0] = DT_STRING;
+        size_t length = strlen(literal->token.attribute.string);
+        value_literal = malloc(sizeof(char) * (size_t)(length * 1.5));
+        convert_string_to_literal(value_literal, literal->token.attribute.string, length);
+        generate_move("LF@", nonterminal_identifier, "", value_literal);
+        break;
+    case TT_INTEGER_LITERAL:
+        literal->dataType[0] = DT_INT;
+        value_literal = malloc(sizeof(char) * 150);
+        convert_int_to_literal(value_literal, literal->token.attribute.integer);
+        generate_move("LF@", nonterminal_identifier, "", value_literal);
+        break;
+    default:
+        return SYNTAX_ERROR;
     }
     literal->token.token_type = TT_NONTERMINAL;
     literal->token.attribute.string = nonterminal_identifier;
@@ -371,11 +410,12 @@ int parse_literal(Symstack* symstack){
     return OK;
 }
 
-int parse_expression_parentheses(Symstack* symstack){
-    Symtable_item* right_parentheses = Symstack_pop(symstack);
-    Symtable_item* nonterminal = Symstack_pop(symstack);
-    Symtable_item* left_parentheses = Symstack_pop(symstack);
-    Symtable_item* shift = Symstack_pop(symstack);
+int parse_expression_parentheses(Symstack *symstack)
+{
+    Symtable_item *right_parentheses = Symstack_pop(symstack);
+    Symtable_item *nonterminal = Symstack_pop(symstack);
+    Symtable_item *left_parentheses = Symstack_pop(symstack);
+    Symtable_item *shift = Symstack_pop(symstack);
 
     free_symtable_item(right_parentheses);
     free_symtable_item(left_parentheses);
@@ -384,13 +424,14 @@ int parse_expression_parentheses(Symstack* symstack){
     return OK;
 }
 
-int parse_expression_id(Symstack* symstack){
-    Symtable_item* identifier = Symstack_pop(symstack);
-    Symtable_item* shift = Symstack_pop(symstack);
+int parse_expression_id(Symstack *symstack)
+{
+    Symtable_item *identifier = Symstack_pop(symstack);
+    Symtable_item *shift = Symstack_pop(symstack);
     identifier->token.token_type = TT_NONTERMINAL;
 
-    char* local_name =
-            malloc(sizeof(char) * strlen(identifier->token.attribute.string) + 1);
+    char *local_name =
+        malloc(sizeof(char) * strlen(identifier->token.attribute.string) + 1);
     strcpy(local_name, token.attribute.string);
     /*
     Symtable_item* variable = Symtable_stack_lookup(symtable_stack, local_name);
@@ -405,152 +446,171 @@ int parse_expression_id(Symstack* symstack){
     return OK;
 }
 
-int parse_expresion_rule(Symstack* symstack, int shift_pos){
-    int current_pos = shift_pos+1;
-    if (current_pos > symstack->top){
+int parse_expresion_rule(Symstack *symstack, int shift_pos)
+{
+    int current_pos = shift_pos + 1;
+    if (current_pos > symstack->top)
+    {
         return SYNTAX_ERROR;
     }
-    switch ((*(symstack->stack+current_pos))->token.token_type) {
-        case TT_NONTERMINAL:
-            current_pos++;
-            if (current_pos > symstack->top){
-                return SYNTAX_ERROR;
-            }
-            switch ((*(symstack->stack+current_pos))->token.token_type) {
-                case TT_PLUS:
-                    //E -> E+E
-                    return parse_expression_binary_operation(symstack, current_pos);
-                case TT_MINUS:
-                    //E -> E-E
-                    return parse_expression_binary_operation(symstack, current_pos);
-                case TT_ASTERISK:
-                    //E -> E*E
-                    return parse_expression_binary_operation(symstack, current_pos);
-                case TT_SLASH:
-                    //E -> E/E
-                    return parse_expression_binary_operation(symstack, current_pos);
-                case TT_LESS:
-                case TT_LESS_OR_EQUALS:
-                case TT_GREATER:
-                case TT_GREATER_OR_EQUALS:
-                case TT_EQUALS:
-                    // E -> E compare E
-                    return parse_expression_binary_operation(symstack, current_pos);
-                default:
-                    return SYNTAX_ERROR;
-            }
-        case TT_OPEN_PARENTHESES:
-            //E -> (E)
-            return parse_expression_parentheses(symstack);
-        case TT_INTEGER_LITERAL:
-        case TT_STRING_LITERAl:
-        case TT_FLOATING_LITERAL:
-            return parse_literal(symstack);
-        case TT_IDENTIFIER:
-            // E -> id
-            // MAYBE FUNEXP?
-            break;
+    switch ((*(symstack->stack + current_pos))->token.token_type)
+    {
+    case TT_NONTERMINAL:
+        current_pos++;
+        if (current_pos > symstack->top)
+        {
+            return SYNTAX_ERROR;
+        }
+        switch ((*(symstack->stack + current_pos))->token.token_type)
+        {
+        case TT_PLUS:
+            //E -> E+E
+            return parse_expression_binary_operation(symstack, current_pos);
+        case TT_MINUS:
+            //E -> E-E
+            return parse_expression_binary_operation(symstack, current_pos);
+        case TT_ASTERISK:
+            //E -> E*E
+            return parse_expression_binary_operation(symstack, current_pos);
+        case TT_SLASH:
+            //E -> E/E
+            return parse_expression_binary_operation(symstack, current_pos);
+        case TT_LESS:
+        case TT_LESS_OR_EQUALS:
+        case TT_GREATER:
+        case TT_GREATER_OR_EQUALS:
+        case TT_EQUALS:
+            // E -> E compare E
+            return parse_expression_binary_operation(symstack, current_pos);
         default:
             return SYNTAX_ERROR;
+        }
+    case TT_OPEN_PARENTHESES:
+        //E -> (E)
+        return parse_expression_parentheses(symstack);
+    case TT_INTEGER_LITERAL:
+    case TT_STRING_LITERAl:
+    case TT_FLOATING_LITERAL:
+        return parse_literal(symstack);
+    case TT_IDENTIFIER:
+        // E -> id
+        // MAYBE FUNEXP?
+        break;
+    default:
+        return SYNTAX_ERROR;
     }
     return SYNTAX_ERROR;
 }
 
-bool is_precedence_end(Token_type tokenType){
-    switch (tokenType) {
-        case TT_OPEN_PARENTHESES:
-        case TT_CLOSE_PARENTHESES:
-        case TT_IDENTIFIER:
-        case TT_STRING_LITERAl:
-        case TT_INTEGER_LITERAL:
-        case TT_FLOATING_LITERAL:
-        case TT_PLUS:
-        case TT_MINUS:
-        case TT_ASTERISK:
-        case TT_SLASH:
-        case TT_SEMICOLON:
-        case TT_EQUALS:
-        case TT_NOT_EQUALS:
-        case TT_LESS_OR_EQUALS:
-        case TT_GREATER_OR_EQUALS:
-        case TT_LESS:
-        case TT_GREATER:
-            return false;
-        default:
-            return true;
+bool is_precedence_end(Token_type tokenType)
+{
+    switch (tokenType)
+    {
+    case TT_OPEN_PARENTHESES:
+    case TT_CLOSE_PARENTHESES:
+    case TT_IDENTIFIER:
+    case TT_STRING_LITERAl:
+    case TT_INTEGER_LITERAL:
+    case TT_FLOATING_LITERAL:
+    case TT_PLUS:
+    case TT_MINUS:
+    case TT_ASTERISK:
+    case TT_SLASH:
+    case TT_SEMICOLON:
+    case TT_EQUALS:
+    case TT_NOT_EQUALS:
+    case TT_LESS_OR_EQUALS:
+    case TT_GREATER_OR_EQUALS:
+    case TT_LESS:
+    case TT_GREATER:
+        return false;
+    default:
+        return true;
     }
 }
 
 int Expresion()
 {
-    Symstack* symstack;
+    Symstack *symstack;
     Symstack_init(&symstack);
-    Symtable_item* stop = create_item();
+    Symtable_item *stop = create_item();
     stop->token.token_type = TT_STOP;
     Symstack_insert(symstack, stop);
     int shift_pos;
 
     bool end_found = false;
-    Symtable_item* a, *b;
-    do{
+    Symtable_item *a, *b;
+    do
+    {
         a = find_terminal_top(symstack);
         b = create_item();
-        if (is_precedence_end(token.token_type)){
+        if (is_precedence_end(token.token_type))
+        {
             b->token.token_type = TT_STOP;
             end_found = true;
-        } else {
+        }
+        else
+        {
             b->token.token_type = token.token_type;
             b->token.attribute = token.attribute;
         }
-        switch (precedence_lookup(a->token.token_type, b->token.token_type)) {
-            case PRECEDENCE_E:
-                Symstack_insert(symstack, b);
-                if (!end_found){
-                    NEXT()
-                }
-                break;
-            case PRECEDENCE_L:
-                insert_shift(symstack, a);
-                Symstack_insert(symstack, b);
-                if (!end_found){
-                    NEXT()
-                }
-                break;
-            case PRECEDENCE_G:
-                shift_pos = shift_position(symstack);
-                if (shift_pos != -1){
-                    parse_expresion_rule(symstack, shift_pos);
-                } else{
-                    return SYNTAX_ERROR;
-                }
-                free_symtable_item(b);
-                break;
-            case PRECEDENCE_X:
+        switch (precedence_lookup(a->token.token_type, b->token.token_type))
+        {
+        case PRECEDENCE_E:
+            Symstack_insert(symstack, b);
+            if (!end_found)
+            {
+                NEXT()
+            }
+            break;
+        case PRECEDENCE_L:
+            insert_shift(symstack, a);
+            Symstack_insert(symstack, b);
+            if (!end_found)
+            {
+                NEXT()
+            }
+            break;
+        case PRECEDENCE_G:
+            shift_pos = shift_position(symstack);
+            if (shift_pos != -1)
+            {
+                parse_expresion_rule(symstack, shift_pos);
+            }
+            else
+            {
                 return SYNTAX_ERROR;
+            }
+            free_symtable_item(b);
+            break;
+        case PRECEDENCE_X:
+            return SYNTAX_ERROR;
         }
     } while (!(end_found && find_terminal_top(symstack)->token.token_type == TT_STOP));
 
     // Move result to known variable
-    Symtable_item* result = Symstack_pop(symstack);
+    Symtable_item *result = Symstack_pop(symstack);
     Symstack_insert(expression_result_stack, result);
 
     Symstack_dispose(&symstack);
     return OK;
 }
 
-int Expression_n(){
-    switch (token.token_type){
-        case TT_CLOSE_BRACES:
-            // Rule: <Expression_n> -> eps
-            return OK;
-        case TT_COMMA:
-            // Rule: <Expression_n> -> , <Expression> <Expression_n>
+int Expression_n()
+{
+    switch (token.token_type)
+    {
+    case TT_CLOSE_BRACES:
+        // Rule: <Expression_n> -> eps
+        return OK;
+    case TT_COMMA:
+        // Rule: <Expression_n> -> , <Expression> <Expression_n>
         CHECK_AND_LOAD_TOKEN(TT_COMMA)
         CHECK_AND_CALL_FUNCTION(Expresion())
         CHECK_AND_CALL_FUNCTION(Expression_n())
         break;
-        default:
-            return SYNTAX_ERROR;
+    default:
+        return SYNTAX_ERROR;
     }
 
     return OK;
@@ -561,8 +621,9 @@ int Declr()
     // Rule: <declr> -> id := <expr>
     CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
 
-    char* identifier_name = malloc(sizeof(*token.attribute.string)*strlen(token.attribute.string)+1);;
-    Symtable_item* identifier = create_item();
+    char *identifier_name = malloc(sizeof(*token.attribute.string) * strlen(token.attribute.string) + 1);
+    ;
+    Symtable_item *identifier = create_item();
     identifier->parameters->identifier = identifier_name;
 
     CHECK_AND_LOAD_TOKEN(TT_DECLARATION_ASSIGNMENT);
@@ -690,6 +751,16 @@ int State()
         {
             // Rule: <state> -> id <Id_n> = <expr>
 
+            tokenStackInit(&idStack);
+            if (second_token)
+            {
+                tokenStackPush(&idStack, prev_token);
+            }
+            else
+            {
+                tokenStackPush(&idStack, token);
+            }
+
             CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
             CHECK_AND_CALL_FUNCTION(Id_n());
             CHECK_AND_LOAD_TOKEN(TT_ASSIGNMENT);
@@ -708,7 +779,7 @@ int State()
         CHECK_AND_CALL_FUNCTION(Expresion());
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
-            Symtable_stack_insert(symtable_stack, localtab_if_for);
+        Symtable_stack_insert(symtable_stack, localtab_if_for);
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
 
@@ -733,7 +804,7 @@ int State()
         CHECK_AND_CALL_FUNCTION(Expresion());
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
-            Symtable_stack_insert(symtable_stack, localtab_if_for);
+        Symtable_stack_insert(symtable_stack, localtab_if_for);
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
 
@@ -845,7 +916,7 @@ int Param()
     CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
 
     CHECK_AND_CALL_FUNCTION(State_data_type());
-    generate_func_param(current_function->parameters[param_counter].identifier, param_counter+1);
+    generate_func_param(current_function->parameters[param_counter].identifier, param_counter + 1);
     param_counter++;
 
     return OK;
@@ -866,24 +937,30 @@ int Stat_list()
         // Rule: <statl> -> <state> <stat_list>
         CHECK_AND_CALL_FUNCTION(State());
 
-        if (is_EOL != true){
+        if (is_EOL != true)
+        {
             return SYNTAX_ERROR;
-        }else{
+        }
+        else
+        {
             is_EOL = false;
         }
-        if (current_function->return_values_count != expression_result_stack->top+1){
+        if (current_function->return_values_count != expression_result_stack->top + 1)
+        {
             fprintf(stderr, "Semantic error in function %s: Expected %d return values but found %d values instead\n",
-                    current_function->token.attribute.string ,current_function->return_values_count,
-                    expression_result_stack->top+1);
+                    current_function->token.attribute.string, current_function->return_values_count,
+                    expression_result_stack->top + 1);
             return SEMANTIC_ERROR_FUNCTION;
         }
-        for(int i = 0; i < current_function->return_values_count;i++){
-            if (expression_result_stack->stack[i]->dataType[0] != current_function->dataType[i]){
+        for (int i = 0; i < current_function->return_values_count; i++)
+        {
+            if (expression_result_stack->stack[i]->dataType[0] != current_function->dataType[i])
+            {
                 fprintf(stderr, "Semantic error in function %s: Return variable datatype does not match!\n",
                         current_function->token.attribute.string);
                 return SEMANTIC_ERROR_FUNCTION;
             }
-            generate_return_move(expression_result_stack->stack[i]->token.attribute.string, i+1);
+            generate_return_move(expression_result_stack->stack[i]->token.attribute.string, i + 1);
         }
         Symstack_dispose(&expression_result_stack);
         Symstack_init(&expression_result_stack);
@@ -973,7 +1050,7 @@ int Func()
     CHECK_AND_LOAD_TOKEN(TT_KEYWORD_FUNC);
 
     CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
-    char* function_identifier = malloc(sizeof(*token.attribute.string) * strlen(token.attribute.string) + 1);
+    char *function_identifier = malloc(sizeof(*token.attribute.string) * strlen(token.attribute.string) + 1);
     current_function = Symtable_search(global_symbol_table, token.attribute.string);
     strcpy(function_identifier, token.attribute.string);
     generate_func_top(token.attribute.string);
@@ -1010,7 +1087,7 @@ int Func()
 
     Symtable_node_ptr helper = Symtable_stack_pop(symtable_stack);
     Symtable_dispose(&helper);
- 
+
     return OK;
 }
 
@@ -1047,8 +1124,9 @@ int Preamble()
     EOL_allowed = true;
 
     CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
-    char* package_id_name = "main";
-    if (strcmp(token.attribute.string, package_id_name) != 0){
+    char *package_id_name = "main";
+    if (strcmp(token.attribute.string, package_id_name) != 0)
+    {
         return SEMANTIC_ERROR_OTHERS;
     }
 
