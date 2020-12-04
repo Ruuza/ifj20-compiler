@@ -408,6 +408,11 @@ int generate_move(char* identifier, char* source){
     return 0;
 }
 
+int generate_return_move(char* identifier, int position){
+    fprintf(code_output_file, "MOVE LF@%%retval%d %s\n", position, identifier);
+    return 0;
+}
+
 int generate_arithmetic_operation(Token_type operation, char* identifier, char* lhs, char* rhs){
     switch (operation) {
         case TT_PLUS:

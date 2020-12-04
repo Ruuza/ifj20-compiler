@@ -36,7 +36,10 @@ STATL : /*eps*/
 STATE  : id STATE_ID
  | if EXPR open_bracket STATL close_bracket ELSE 
  | for FOR_DECLR EXPR semicolon EXPR open_bracket STATL close_bracket
- | return EXPR;
+ | return EXPR EXPR_N;
+
+EXPR_N : /*eps*/
+ | comma EXPR EXPR_N;
 
 STATE_ID: DECLR
  | open_parenthesis FUNC_PARAM close_parenthesis

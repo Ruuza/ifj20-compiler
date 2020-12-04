@@ -18,5 +18,7 @@ int generate_func_bottom(char* function_identifier);
 
 int generate_move(char* identifier, char* source);
 
+int generate_return_move(char* identifier, int position);
+
 int generate_arithmetic_operation(Token_type operation, char* identifier, char* lhs, char* rhs);
 #endif //IFJ20C_CODEGEN_H

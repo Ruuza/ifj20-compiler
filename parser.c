@@ -29,6 +29,7 @@ Symtable_node_ptr global_symbol_table;
 Symtable_item* current_function;
 int global_temporary_variable_counter = 0;
 int param_counter;
+Symstack* expression_result_stack;
 Symtable_stack* symtable_stack;
 
 // Load next token, check the return code and check if EOL is allowed.
@@ -95,6 +96,7 @@ int For_declr();
 int Else();
 int Id_n();
 int Expresion();
+int Expression_n();
 int Declr();
 int Types_n();
 int Func_param();
@@ -494,10 +496,28 @@ int Expresion()
 
     // Move result to known variable
     Symtable_item* result = Symstack_pop(symstack);
+    Symstack_insert(expression_result_stack, result);
     generate_move("LF@expr-result", result->token.attribute.string);
-    free(result);
 
     Symstack_dispose(&symstack);
+    return OK;
+}
+
+int Expression_n(){
+    switch (token.token_type){
+        case TT_CLOSE_BRACES:
+            // Rule: <Expression_n> -> eps
+            return OK;
+        case TT_COMMA:
+            // Rule: <Expression_n> -> , <Expression> <Expression_n>
+        CHECK_AND_LOAD_TOKEN(TT_COMMA)
+        CHECK_AND_CALL_FUNCTION(Expresion())
+        CHECK_AND_CALL_FUNCTION(Expression_n())
+        break;
+        default:
+            return SYNTAX_ERROR;
+    }
+
     return OK;
 }
 
@@ -692,7 +712,9 @@ int State()
         // Rule: <state> -> return <expr>
         CHECK_AND_LOAD_TOKEN(TT_KEYWORD_RETURN);
 
-        CHECK_AND_CALL_FUNCTION(Expresion());
+        CHECK_AND_CALL_FUNCTION(Expresion())
+
+        CHECK_AND_CALL_FUNCTION(Expression_n())
 
         return OK;
         break;
@@ -806,14 +828,27 @@ int Stat_list()
         // Rule: <statl> -> <state> <stat_list>
         CHECK_AND_CALL_FUNCTION(State());
 
-        if (is_EOL != true)
-        {
+        if (is_EOL != true){
             return SYNTAX_ERROR;
-        }
-        else
-        {
+        }else{
             is_EOL = false;
         }
+        if (current_function->return_values_count != expression_result_stack->top+1){
+            fprintf(stderr, "Semantic error in function %s: Expected %d return values but found %d values instead\n",
+                    current_function->token.attribute.string ,current_function->return_values_count,
+                    expression_result_stack->top+1);
+            return SEMANTIC_ERROR_FUNCTION;
+        }
+        for(int i = 0; i < current_function->return_values_count;i++){
+            if (expression_result_stack->stack[i]->dataType[0] != current_function->dataType[i]){
+                fprintf(stderr, "Semantic error in function %s: Return variable datatype does not match!\n",
+                        current_function->token.attribute.string);
+                return SEMANTIC_ERROR_FUNCTION;
+            }
+            generate_return_move(expression_result_stack->stack[i]->token.attribute.string, i+1);
+        }
+        Symstack_dispose(&expression_result_stack);
+        Symstack_init(&expression_result_stack);
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
         return OK;
@@ -1033,6 +1068,7 @@ int fast_func()
     CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
     function_name = malloc(sizeof(*token.attribute.string) * strlen(token.attribute.string) + 1);
     strcpy(function_name, token.attribute.string);
+    function->token.attribute.string = function_name;
 
     CHECK_AND_LOAD_TOKEN(TT_OPEN_PARENTHESES);
     CHECK_AND_CALL_FUNCTION(fast_params(function));
@@ -1070,7 +1106,6 @@ int fast_func()
     }
 
     Symtable_insert(&global_symbol_table, function_name, function);
-    free(function_name);
     return OK;
 }
 
@@ -1154,8 +1189,7 @@ int fast_ret_types(Symtable_item *function)
         return OK;
     case TT_OPEN_BRACES:
         // Rule: <ret_types> -> eps
-        function->dataType[0] = DT_VOID;
-        function->return_values_count = 1;
+        function->return_values_count = 0;
         return OK;
     case TT_KEYWORD_INT:
     case TT_KEYWORD_STRING:
@@ -1261,6 +1295,7 @@ int fast_types_n(Symtable_item *function)
 int parse()
 {
     Symtable_stack_init(&symtable_stack);
+    Symstack_init(&expression_result_stack);
     // First data gathering pass
     return_code = fill_function_table();
     if (return_code != OK)
