@@ -4,6 +4,8 @@
  * @brief Syntax and semantic analysis. Parsing expressions.
  * 
  * @author Petr Růžanský <xruzan00>
+ *         Radek Maňák <xmanak20>
+ *         Adrián Babola <xbabol00>
  * 
  */
 
@@ -62,6 +64,15 @@ tTokenStack idStack;
         }                                   \
     }
 
+#define NEXT_WITH_EOL() \
+{                       \
+    next_token(&token); \
+    if (token.token_type == TT_ERR) \
+    {                   \
+        return LEXICAL_ERROR;       \
+    }                   \
+}                      \
+
 // Compare actual token with TOK and then call and compare next token.
 #define CHECK_AND_LOAD_TOKEN(TOK)             \
     {                                         \
@@ -104,6 +115,7 @@ int Declr();
 int Types_n();
 int Func_param();
 int State();
+int State_id();
 int State_data_type();
 int Types();
 int Params_n();
@@ -160,22 +172,14 @@ int Id_n()
 
         CHECK_AND_LOAD_TOKEN(TT_COMMA);
 
-        if (second_token)
-        {
-            tokenStackPush(&idStack, prev_token);
-        }
-        else
-        {
+        if (token.token_type == TT_IDENTIFIER){
             tokenStackPush(&idStack, token);
         }
-
         CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
 
         CHECK_AND_CALL_FUNCTION(Id_n());
 
         return OK;
-        break;
-
     case TT_ASSIGNMENT:
         // Rule: <id_n> -> eps
 
@@ -559,7 +563,7 @@ int Expresion()
             Symstack_insert(symstack, b);
             if (!end_found)
             {
-                NEXT()
+                NEXT_WITH_EOL()
             }
             break;
         case PRECEDENCE_L:
@@ -567,7 +571,7 @@ int Expresion()
             Symstack_insert(symstack, b);
             if (!end_found)
             {
-                NEXT()
+                NEXT_WITH_EOL()
             }
             break;
         case PRECEDENCE_G:
@@ -617,20 +621,17 @@ int Expression_n()
 
 int Declr()
 {
-    // Rule: <declr> -> id := <expr>
-    CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
+    // Rule: <declr> -> := <expr>
+    CHECK_AND_LOAD_TOKEN(TT_DECLARATION_ASSIGNMENT)
 
-    char *identifier_name = malloc(sizeof(*token.attribute.string) * strlen(token.attribute.string) + 1);
-    ;
-    Symtable_item *identifier = create_item();
-    identifier->parameters->identifier = identifier_name;
-
-    CHECK_AND_LOAD_TOKEN(TT_DECLARATION_ASSIGNMENT);
-
-    CHECK_AND_CALL_FUNCTION(Expresion());
-    Symtable_insert(Symtable_stack_head(symtable_stack), identifier_name, identifier);
-    free(identifier_name);
-
+    CHECK_AND_CALL_FUNCTION(Expresion())
+    if (token.token_type == TT_EOL){
+        // EOL token ends expression
+        is_EOL = true;
+        NEXT()
+        return OK;
+    }
+    CHECK_AND_CALL_FUNCTION(Expression_n())
     return OK;
 }
 
@@ -725,48 +726,10 @@ int State()
     switch (token.token_type)
     {
     case TT_IDENTIFIER:
-        prev_token = token;
-        NEXT();
-        second_token = true;
-
-        if (token.token_type == TT_DECLARATION_ASSIGNMENT)
-        {
-            // Rule: <state> -> <declr>
-            CHECK_AND_CALL_FUNCTION(Declr());
-            return OK;
-        }
-        else if (token.token_type == TT_OPEN_PARENTHESES)
-        {
-            // Rule: <state> -> id ( <func_param> )
-
-            CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
-            CHECK_AND_LOAD_TOKEN(TT_OPEN_PARENTHESES);
-            CHECK_AND_CALL_FUNCTION(Func_param());
-            CHECK_AND_LOAD_TOKEN(TT_CLOSE_PARENTHESES);
-            return OK;
-        }
-        else
-        {
-            // Rule: <state> -> id <Id_n> = <expr>
-
-            tokenStackInit(&idStack);
-            if (second_token)
-            {
-                tokenStackPush(&idStack, prev_token);
-            }
-            else
-            {
-                tokenStackPush(&idStack, token);
-            }
-
-            CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
-            CHECK_AND_CALL_FUNCTION(Id_n());
-            CHECK_AND_LOAD_TOKEN(TT_ASSIGNMENT);
-            CHECK_AND_CALL_FUNCTION(Expresion());
-            return OK;
-        }
-
-        return OK;
+        // Rule: <state> -> id <state_id>
+        tokenStackPush(&idStack, token);
+        CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER)
+        CHECK_AND_CALL_FUNCTION(State_id())
         break;
 
     case TT_KEYWORD_IF:
@@ -820,6 +783,26 @@ int State()
 
         CHECK_AND_CALL_FUNCTION(Expression_n())
 
+        if (current_function->return_values_count != expression_result_stack->top + 1)
+        {
+            fprintf(stderr, "Semantic error in function %s: Expected %d return values but found %d values instead\n",
+                    current_function->token.attribute.string, current_function->return_values_count,
+                    expression_result_stack->top + 1);
+            return SEMANTIC_ERROR_FUNCTION;
+        }
+        for (int i = 0; i < current_function->return_values_count; i++)
+        {
+            if (expression_result_stack->stack[i]->dataType[0] != current_function->dataType[i])
+            {
+                fprintf(stderr, "Semantic error in function %s: Return variable datatype does not match!\n",
+                        current_function->token.attribute.string);
+                return SEMANTIC_ERROR_FUNCTION;
+            }
+            generate_return_move(expression_result_stack->stack[i]->token.attribute.string, i + 1);
+        }
+        Symstack_dispose(&expression_result_stack);
+        Symstack_init(&expression_result_stack);
+
         return OK;
         break;
 
@@ -827,6 +810,36 @@ int State()
         return SYNTAX_ERROR;
         break;
     }
+    return OK;
+}
+
+int State_id(){
+    if (token.token_type == TT_DECLARATION_ASSIGNMENT)
+    {
+        // Rule: <state_id> -> <declr>
+
+        CHECK_AND_CALL_FUNCTION(Declr())
+        return OK;
+    }
+    else if (token.token_type == TT_OPEN_PARENTHESES)
+    {
+        // Rule: <state_id> -> ( <func_param> )
+        CHECK_AND_LOAD_TOKEN(TT_OPEN_PARENTHESES)
+        CHECK_AND_CALL_FUNCTION(Func_param())
+        CHECK_AND_LOAD_TOKEN(TT_CLOSE_PARENTHESES)
+        return OK;
+    }
+    else if (token.token_type == TT_COMMA)
+    {
+        // Rule: <state_id> -> <Id_n> = <expr>
+
+        CHECK_AND_CALL_FUNCTION(Id_n())
+        CHECK_AND_LOAD_TOKEN(TT_ASSIGNMENT)
+        CHECK_AND_CALL_FUNCTION(Expresion())
+        return OK;
+    }
+
+    return OK;
 }
 
 int State_data_type()
@@ -926,11 +939,8 @@ int Stat_list()
     switch (token.token_type)
     {
     case TT_IDENTIFIER:
-        break;
     case TT_KEYWORD_IF:
-        break;
     case TT_KEYWORD_FOR:
-        break;
     case TT_KEYWORD_RETURN:
         // Rule: <statl> -> <state> <stat_list>
         CHECK_AND_CALL_FUNCTION(State());
@@ -943,25 +953,6 @@ int Stat_list()
         {
             is_EOL = false;
         }
-        if (current_function->return_values_count != expression_result_stack->top + 1)
-        {
-            fprintf(stderr, "Semantic error in function %s: Expected %d return values but found %d values instead\n",
-                    current_function->token.attribute.string, current_function->return_values_count,
-                    expression_result_stack->top + 1);
-            return SEMANTIC_ERROR_FUNCTION;
-        }
-        for (int i = 0; i < current_function->return_values_count; i++)
-        {
-            if (expression_result_stack->stack[i]->dataType[0] != current_function->dataType[i])
-            {
-                fprintf(stderr, "Semantic error in function %s: Return variable datatype does not match!\n",
-                        current_function->token.attribute.string);
-                return SEMANTIC_ERROR_FUNCTION;
-            }
-            generate_return_move(expression_result_stack->stack[i]->token.attribute.string, i + 1);
-        }
-        Symstack_dispose(&expression_result_stack);
-        Symstack_init(&expression_result_stack);
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
         return OK;
