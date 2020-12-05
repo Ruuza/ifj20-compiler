@@ -27,6 +27,8 @@ int set_code_output(FILE *file) {
 int generate_header() {
     fprintf(code_output_file, ".IFJcode20\n");
     fprintf(code_output_file, "JUMP $$main\n\n");
+
+    generate_print();
     return 0;
 }
 
@@ -184,33 +186,7 @@ int generate_inputf() {
 }
 
 int generate_print() {
-    char *function_identifier = "print";
-    fprintf(code_output_file, "LABEL $%s\n", function_identifier);
-    fprintf(code_output_file, "PUSHFRAME\n");
-    fprintf(code_output_file, "JUMPIFEQ $end LF@%%1 string@stop\n");
-    fprintf(code_output_file, "WRITE LF@%%1\n");
-    fprintf(code_output_file, "JUMPIFEQ $end LF@%%2 string@stop\n");
-    fprintf(code_output_file, "WRITE LF@%%2\n");
-    fprintf(code_output_file, "JUMPIFEQ $end LF@%%3 string@stop\n");
-    fprintf(code_output_file, "WRITE LF@%%3\n");
-    fprintf(code_output_file, "JUMPIFEQ $end LF@%%4 string@stop\n");
-    fprintf(code_output_file, "WRITE LF@%%4\n");
-    fprintf(code_output_file, "JUMPIFEQ $end LF@%%5 string@stop\n");
-    fprintf(code_output_file, "WRITE LF@%%5\n");
-    fprintf(code_output_file, "JUMPIFEQ $end LF@%%6 string@stop\n");
-    fprintf(code_output_file, "WRITE LF@%%6\n");
-    fprintf(code_output_file, "JUMPIFEQ $end LF@%%7 string@stop\n");
-    fprintf(code_output_file, "WRITE LF@%%7\n");
-    fprintf(code_output_file, "JUMPIFEQ $end LF@%%8 string@stop\n");
-    fprintf(code_output_file, "WRITE LF@%%8\n");
-    fprintf(code_output_file, "JUMPIFEQ $end LF@%%9 string@stop\n");
-    fprintf(code_output_file, "WRITE LF@%%9\n");
-    fprintf(code_output_file, "JUMPIFEQ $end LF@%%10 string@stop\n");
-    fprintf(code_output_file, "WRITE LF@%%10\n");
-    fprintf(code_output_file, "JUMP $end\n");
-    fprintf(code_output_file, "LABEL $end\n");
-    fprintf(code_output_file, "POPFRAME\n");
-    fprintf(code_output_file, "RETURN\n");
+    fprintf(code_output_file, "%s", "LABEL $print\nPUSHFRAME\nDEFVAR LF@counter\nMOVE LF@counter LF@%1\n# while\nJUMP $$print_while_end\nLABEL $$print_while\nCREATEFRAME\nDEFVAR TF@variable\nPOPS TF@variable\nWRITE TF@variable\nSUB LF@counter LF@counter int@1\nLABEL $$print_while_end\nJUMPIFNEQ $$print_while LF@counter int@0\n# end while\nPOPFRAME\nRETURN\n\n");
     return 0;
 }
 
@@ -403,8 +379,28 @@ int generate_chr() {
     return 0;
 }
 
+int generate_declaration(char* dest_frame, char* identifier){
+    fprintf(code_output_file, "DEFVAR %s%s\n", dest_frame, identifier);
+    return 0;
+}
+
 int generate_move(char* dest_frame, char* identifier, char* source_frame, char* source){
     fprintf(code_output_file, "MOVE %s%s %s%s\n", dest_frame, identifier, source_frame, source);
+    return 0;
+}
+
+int generate_frame(){
+    fprintf(code_output_file, "CREATEFRAME\n");
+    return 0;
+}
+
+int generate_function_call(char * function_name){
+    fprintf(code_output_file, "CALL $%s\n", function_name);
+    return 0;
+}
+
+int generate_push(char* dest_frame, char* variable){
+    fprintf(code_output_file, "PUSHS %s%s\n", dest_frame, variable);
     return 0;
 }
 

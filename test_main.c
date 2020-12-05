@@ -177,6 +177,7 @@ int test_return_value(char * input, int expected){
     }
     int parse_return = parse();
     if (parse_return != expected){
+        fprintf(stderr, "TEST: Expected return code %d but found %d", expected, parse_return);
         return 1;
     }
     return 0;

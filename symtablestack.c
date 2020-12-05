@@ -38,7 +38,7 @@ Symtable_node_ptr* Symtable_stack_head(Symtable_stack* symstack){
 Symtable_item* Symtable_stack_lookup(Symtable_stack* symtableStack, char* identifier){
     for (int i = symtableStack->top; i >= 0; i--) {
         Symtable_item* item = Symtable_search(symtableStack->stack[i], identifier);
-        if (strcmp(item->token.attribute.string, identifier) == 0){
+        if (item != NULL && strcmp(item->token.attribute.string, identifier) == 0){
             return item;
         }
     }

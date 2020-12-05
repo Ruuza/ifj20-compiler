@@ -20,5 +20,13 @@ int generate_move(char* dest_frame, char* identifier, char* source_frame, char* 
 
 int generate_return_move(char* identifier, int position);
 
+int generate_declaration(char* dest_frame, char* identifier);
+
+int generate_frame();
+
+int generate_push(char* dest_frame, char* variable);
+
+int generate_function_call(char * function_name);
+
 int generate_arithmetic_operation(Token_type operation, char* identifier, char* lhs, char* rhs);
 #endif //IFJ20C_CODEGEN_H

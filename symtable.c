@@ -136,3 +136,15 @@ Symtable_item* create_item(){
     item->return_values_count = 0;
     return item;
 }
+
+Symtable_item* create_item_copy(Symtable_item* item){
+    Symtable_item* copy = malloc(sizeof(Symtable_item));
+    copy->isfunction = item->isfunction;
+    copy->parameter_count = item->parameter_count;
+    copy->return_values_count = item->return_values_count;
+    copy->token.token_type = item->token.token_type;
+    copy->token.attribute.string = malloc(sizeof(char)*strlen(item->token.attribute.string)+1);
+    strcpy(copy->token.attribute.string, item->token.attribute.string);
+    copy->parameters = NULL;
+    return copy;
+}

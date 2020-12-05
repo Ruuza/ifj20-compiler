@@ -1,5 +1,7 @@
 #include "token_stack.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include "string.h"
 
 int STACK_SIZE = MAX_STACK;
 
@@ -101,6 +103,9 @@ int tokenStackPush(tTokenStack *s, Token token)
     //increment top of stack
     s->top += 1;
     //insert element on top of stack
+    char* attribute = malloc(sizeof(char)*strlen(token.attribute.string)+1);
+    strcpy(attribute, token.attribute.string);
+    token.attribute.string = attribute;
     s->tokens[s->top] = token;
 
     return 1;

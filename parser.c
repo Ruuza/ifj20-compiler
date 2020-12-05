@@ -306,7 +306,8 @@ int parse_expression_binary_operation(Symstack *symstack, int operator_pos)
     Symtable_item *shift = Symstack_pop(symstack);
 
     char *nonterminal_identifier = malloc(sizeof(char) * 20);
-    sprintf(nonterminal_identifier, "LF@expr-var%d", global_temporary_variable_counter++);
+    sprintf(nonterminal_identifier, "expr-var%d", global_temporary_variable_counter++);
+    generate_declaration("LF@", nonterminal_identifier);
     generate_arithmetic_operation(operator_item->token.token_type, nonterminal_identifier, left_item->token.attribute.string,
                                   right_item->token.attribute.string);
     free(left_item->token.attribute.string);
@@ -379,6 +380,7 @@ int parse_literal(Symstack *symstack)
 
     char *nonterminal_identifier = malloc(sizeof(char) * 20);
     sprintf(nonterminal_identifier, "expr-var%d", global_temporary_variable_counter++);
+    generate_declaration("LF@", nonterminal_identifier);
 
     char *value_literal;
     switch (literal->token.token_type)
@@ -540,6 +542,7 @@ int Expresion()
     stop->token.token_type = TT_STOP;
     Symstack_insert(symstack, stop);
     int shift_pos;
+    int parentheses_depth = 0;
 
     bool end_found = false;
     Symtable_item *a, *b;
@@ -547,13 +550,18 @@ int Expresion()
     {
         a = find_terminal_top(symstack);
         b = create_item();
-        if (is_precedence_end(token.token_type))
+        if (is_precedence_end(token.token_type) || parentheses_depth == 0 && token.token_type == TT_CLOSE_PARENTHESES)
         {
             b->token.token_type = TT_STOP;
             end_found = true;
         }
         else
         {
+            if (token.token_type == TT_OPEN_PARENTHESES){
+                parentheses_depth++;
+            } else if (token.token_type == TT_CLOSE_PARENTHESES){
+                parentheses_depth--;
+            }
             b->token.token_type = token.token_type;
             b->token.attribute = token.attribute;
         }
@@ -619,19 +627,117 @@ int Expression_n()
     return OK;
 }
 
-int Declr()
-{
-    // Rule: <declr> -> := <expr>
-    CHECK_AND_LOAD_TOKEN(TT_DECLARATION_ASSIGNMENT)
+void function_call(Symtable_item* function){
+    generate_frame();
+    if (strcmp(function->token.attribute.string, "print") == 0){
+        // print takes arguments from stack
+        char arg_count[10];
+        sprintf(arg_count, "%d", expression_result_stack->top+1);
+        generate_declaration("TF@", "%1");
+        generate_move("TF@", "%1", "int@", arg_count);
+        for (int i = expression_result_stack->top; i >= 0; i--) {
+            generate_push("LF@", expression_result_stack->stack[i]->token.attribute.string);
+        }
+    } else {
+        for (int i = 0; i <= expression_result_stack->top; ++i) {
+            char argument[10];
+            sprintf(argument, "%%%d", i+1);
+            generate_declaration("TF@", argument);
+            generate_move("TF@", argument, "LF@", expression_result_stack->stack[i]->token.attribute.string);
+        }
+    }
+    Symstack_dispose(&expression_result_stack);
+    Symstack_init(&expression_result_stack);
+    generate_function_call(function->token.attribute.string);
+    // Create objecct with called function name and store in expression result
+    Symtable_item* function_result = create_item_copy(function);
+    Symstack_insert(expression_result_stack, function_result);
+}
 
-    CHECK_AND_CALL_FUNCTION(Expresion())
+int function_call_return(Symtable_item* function) {
+    for (int i = 0; i < function->parameter_count; i++) {
+        Symtable_item *identifier = Symtable_search(*Symtable_stack_head(symtable_stack), idStack.tokens[i].attribute.string);
+        if (identifier != NULL) {
+            return SEMANTIC_ERROR_UNDEFINED_VARIABLE; //REDEFINED
+        }
+        generate_declaration("LF@", idStack.tokens[i].attribute.string);
+        identifier = create_item();
+        identifier->token.token_type = TT_IDENTIFIER;
+        identifier->token.attribute.string = malloc(
+                sizeof(char) * strlen(idStack.tokens[i].attribute.string) + 1);
+        identifier->dataType[0] = function->parameters[i].dataType;
+        strcpy(identifier->token.attribute.string, idStack.tokens[i].attribute.string);
+        Symtable_insert(Symtable_stack_head(symtable_stack), identifier->token.attribute.string, identifier);
+
+        char argument[10];
+        sprintf(argument, "%d", i + 1);
+        generate_move("LF@", idStack.tokens[i].attribute.string, "TF@%retval", argument);
+        expression_result_stack->stack[i]->parameters[i];
+    }
+    return 0;
+}
+
+    int Declr()
+    {
+        // Rule: <declr> -> := <expr>
+        CHECK_AND_LOAD_TOKEN(TT_DECLARATION_ASSIGNMENT)
+
+        if (token.token_type == TT_IDENTIFIER){
+            Symtable_item* function = Symtable_search(global_symbol_table, token.attribute.string);
+        if (function != NULL){
+            // Is function. Call move parameters to temporary frame and call it.
+            CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
+            CHECK_AND_LOAD_TOKEN(TT_OPEN_PARENTHESES)
+            CHECK_AND_CALL_FUNCTION(Func_param())
+            // Fills expression_result_stack with parameter variables
+            CHECK_AND_LOAD_TOKEN(TT_CLOSE_PARENTHESES);
+            function_call(function);
+        } else {
+            // Variable not a function
+            CHECK_AND_CALL_FUNCTION(Expresion())
+        }
+    } else {
+        // Likely a literal value or error
+        CHECK_AND_CALL_FUNCTION(Expresion())
+    }
+
     if (token.token_type == TT_EOL){
         // EOL token ends expression
-        is_EOL = true;
         NEXT()
-        return OK;
+        is_EOL = true;
     }
-    CHECK_AND_CALL_FUNCTION(Expression_n())
+    if (!is_EOL){
+        CHECK_AND_CALL_FUNCTION(Expression_n())
+    }
+
+    int lvalue_counter = 0;
+    for (int i = 0; i <= expression_result_stack->top; ++i) {
+        if (expression_result_stack->stack[i]->isfunction){
+            // Obtain full global function item from "reference"
+            Symtable_item *called_function = Symtable_search(global_symbol_table, expression_result_stack->stack[i]->token.attribute.string);
+            function_call_return(called_function);
+        } else {
+            Symtable_item* identifier = Symtable_stack_lookup(symtable_stack, idStack.tokens[lvalue_counter].attribute.string);
+            if (identifier == NULL){
+                generate_declaration("LF@", idStack.tokens[lvalue_counter].attribute.string);
+                identifier = create_item();
+                identifier->token.token_type = TT_IDENTIFIER;
+                identifier->token.attribute.string = malloc(sizeof(char)*strlen(idStack.tokens[lvalue_counter].attribute.string)+1);
+                identifier->dataType[0] = expression_result_stack->stack[i]->dataType[0];
+                strcpy(identifier->token.attribute.string, idStack.tokens[lvalue_counter].attribute.string);
+                Symtable_insert(Symtable_stack_head(symtable_stack), identifier->token.attribute.string, identifier);
+            }
+            generate_move("LF@", idStack.tokens[lvalue_counter].attribute.string, "LF@", expression_result_stack->stack[i]->token.attribute.string);
+            lvalue_counter++;
+        }
+    }
+
+    while (!tokenStackEmpty(&idStack)){
+        tokenStackPop(&idStack);
+    }
+    Symstack_dispose(&expression_result_stack);
+    Symstack_init(&expression_result_stack);
+
     return OK;
 }
 
@@ -827,6 +933,12 @@ int State_id(){
         CHECK_AND_LOAD_TOKEN(TT_OPEN_PARENTHESES)
         CHECK_AND_CALL_FUNCTION(Func_param())
         CHECK_AND_LOAD_TOKEN(TT_CLOSE_PARENTHESES)
+        Token id_token;
+        tokenStackTop(&idStack, &id_token);
+        tokenStackPop(&idStack);
+        Symtable_item* function = Symtable_search(global_symbol_table, id_token.attribute.string);
+        function_call(function);
+
         return OK;
     }
     else if (token.token_type == TT_COMMA)
@@ -1153,6 +1265,7 @@ int Start()
 
     CHECK_AND_CALL_FUNCTION(Preamble());
     generate_header();
+    tokenStackInit(&idStack);
 
     CHECK_AND_CALL_FUNCTION(Body());
 
@@ -1174,11 +1287,20 @@ int fill_function_table()
     return OK;
 }
 
+int insert_builtins(){
+    Symtable_item* print = create_item();
+    print->token.attribute.string = malloc(sizeof(char)*strlen("print")+1);
+    strcpy(print->token.attribute.string, "print");
+    Symtable_insert(&global_symbol_table, "print", print);
+    return 0;
+}
+
 int fast_func()
 {
     // Rule: <func> -> func id ( <params> ) <ret_types> { <stat_list> }
     char *function_name;
     Symtable_item *function = create_item();
+    function->isfunction = true;
     EOL_allowed = false;
 
     CHECK_AND_LOAD_TOKEN(TT_KEYWORD_FUNC);
@@ -1415,6 +1537,7 @@ int parse()
     Symstack_init(&expression_result_stack);
     // First data gathering pass
     return_code = fill_function_table();
+    insert_builtins();
     if (return_code != OK)
     {
         return return_code;

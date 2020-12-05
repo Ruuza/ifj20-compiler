@@ -27,6 +27,7 @@ typedef struct {
 typedef struct {
     Token token;
     Data_type dataType[MAXIMUM_RETURN_VALUES];
+    bool isfunction;
     int return_values_count;
     Parameter* parameters;
     int parameter_count;
@@ -94,5 +95,11 @@ void Symtable_dispose(Symtable_node_ptr *root);
  * @return pointer to Symtable_item
  */
 Symtable_item* create_item();
+
+/**
+ * Create copy without parameters. Obtain original from global symtable.
+ * @return
+ */
+Symtable_item* create_item_copy(Symtable_item* item);
 
 #endif //IFJ20C_SYMTABLE_H
