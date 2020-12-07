@@ -131,6 +131,7 @@ void free_symtable_node(Symtable_node_ptr node){
 
 Symtable_item* create_item(){
     Symtable_item* item = malloc(sizeof(Symtable_item));
+    item->isfunction = false;
     item->parameters = NULL;
     item->parameter_count = 0;
     item->return_values_count = 0;

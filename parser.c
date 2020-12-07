@@ -1369,6 +1369,7 @@ int fill_function_table()
 int insert_builtins(){
     Symtable_item* print = create_item();
     print->token.attribute.string = malloc(sizeof(char)*strlen("print")+1);
+    print->isfunction = true;
     strcpy(print->token.attribute.string, "print");
     Symtable_insert(&global_symbol_table, "print", print);
     return 0;
