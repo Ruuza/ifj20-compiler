@@ -16,7 +16,8 @@ typedef enum {
     DT_VOID,
     DT_STRING,
     DT_INT,
-    DT_FLOAT
+    DT_FLOAT,
+    DT_BOOL,
 } Data_type;
 
 typedef struct {

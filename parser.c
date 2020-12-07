@@ -295,6 +295,20 @@ int shift_position(Symstack *symstack)
     return -1;
 }
 
+bool is_compare_operator(Token_type operator){
+    switch(operator){
+        case TT_LESS:
+        case TT_LESS_OR_EQUALS:
+        case TT_EQUALS:
+        case TT_NOT_EQUALS:
+        case TT_GREATER:
+        case TT_GREATER_OR_EQUALS:
+            return true;
+        default:
+            return false;
+    }
+}
+
 int parse_expression_binary_operation(Symstack *symstack, int operator_pos)
 {
     if (symstack->top != operator_pos + 1)
@@ -309,8 +323,39 @@ int parse_expression_binary_operation(Symstack *symstack, int operator_pos)
     char *nonterminal_identifier = malloc(sizeof(char) * 20);
     sprintf(nonterminal_identifier, "expr-var%d", global_temporary_variable_counter++);
     generate_declaration("LF@", nonterminal_identifier);
-    generate_arithmetic_operation(operator_item->token.token_type, nonterminal_identifier, left_item->token.attribute.string,
-                                  right_item->token.attribute.string);
+    if (left_item->dataType[0] != right_item->dataType[0]){
+        fprintf(stderr, "%s does not have the same type as %s",
+                left_item->token.attribute.string, right_item->token.attribute.string);
+        return SEMANTIC_ERROR_TYPE_COMPATIBILITY;
+    }
+    int unsupported_operation = 1;
+    switch (left_item->dataType[0]) {
+        case DT_VOID:
+            break;
+        case DT_STRING:
+            unsupported_operation = generate_arithmetic_operation_string(operator_item->token.token_type, nonterminal_identifier,
+                                                                         left_item->token.attribute.string,
+                                                                         right_item->token.attribute.string);
+            break;
+        case DT_INT:
+            unsupported_operation = generate_arithmetic_operation_int(operator_item->token.token_type, nonterminal_identifier,
+                                                                      left_item->token.attribute.string,
+                                                                      right_item->token.attribute.string);
+            break;
+        case DT_FLOAT:
+            unsupported_operation = generate_arithmetic_operation_float(operator_item->token.token_type, nonterminal_identifier,
+                                                                        left_item->token.attribute.string,
+                                                                        right_item->token.attribute.string);
+            break;
+        case DT_BOOL:
+            break;
+    }
+    if (unsupported_operation){
+        return SEMANTIC_ERROR_TYPE_COMPATIBILITY;
+    }
+    if (is_compare_operator(operator_item->token.token_type)){
+        left_item->dataType[0] = DT_BOOL;
+    }
     free(left_item->token.attribute.string);
     left_item->token.attribute.string = nonterminal_identifier;
 
@@ -587,7 +632,7 @@ int Expresion()
             shift_pos = shift_position(symstack);
             if (shift_pos != -1)
             {
-                parse_expresion_rule(symstack, shift_pos);
+                CHECK_AND_CALL_FUNCTION(parse_expresion_rule(symstack, shift_pos));
             }
             else
             {

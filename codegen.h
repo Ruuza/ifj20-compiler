@@ -28,5 +28,9 @@ int generate_push(char* dest_frame, char* variable);
 
 int generate_function_call(char * function_name);
 
-int generate_arithmetic_operation(Token_type operation, char* identifier, char* lhs, char* rhs);
+int generate_arithmetic_operation_string(Token_type operation, char* result, char* lhs, char* rhs);
+
+int generate_arithmetic_operation_int(Token_type operation, char* result, char* lhs, char* rhs);
+
+int generate_arithmetic_operation_float(Token_type operation, char* result, char* lhs, char* rhs);
 #endif //IFJ20C_CODEGEN_H

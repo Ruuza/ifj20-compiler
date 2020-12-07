@@ -409,19 +409,115 @@ int generate_return_move(char* identifier, int position){
     return 0;
 }
 
-int generate_arithmetic_operation(Token_type operation, char* identifier, char* lhs, char* rhs){
+int generate_arithmetic_operation_string(Token_type operation, char* result, char* lhs, char* rhs) {
     switch (operation) {
         case TT_PLUS:
-            fprintf(code_output_file, "ADD LF@%s LF@%s LF@%s\n", identifier, lhs, rhs);
+            fprintf(code_output_file, "CONCAT LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            break;
+        case TT_LESS:
+            fprintf(code_output_file, "LT LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            break;
+        case TT_LESS_OR_EQUALS:
+            fprintf(code_output_file, "GT LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            fprintf(code_output_file, "NOT LF@%s LF@%s\n", result, result);
+            break;
+        case TT_EQUALS:
+            fprintf(code_output_file, "EQ LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            break;
+        case TT_NOT_EQUALS:
+            fprintf(code_output_file, "EQ LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            fprintf(code_output_file, "NOT LF@%s LF@%s\n", result, result);
+            break;
+        case TT_GREATER:
+            fprintf(code_output_file, "GT LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            break;
+        case TT_GREATER_OR_EQUALS:
+            fprintf(code_output_file, "LT LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            fprintf(code_output_file, "NOT LF@%s LF@%s\n", result, result);
+            break;
+        default:
+            fprintf(stderr, "Unsupported operation!");
+            return 1;
+    }
+    return 0;
+}
+
+int generate_arithmetic_operation_int(Token_type operation, char* result, char* lhs, char* rhs){
+    switch (operation) {
+        case TT_PLUS:
+            fprintf(code_output_file, "ADD LF@%s LF@%s LF@%s\n", result, lhs, rhs);
             break;
         case TT_MINUS:
-            fprintf(code_output_file, "SUB LF@%s LF@%s LF@%s\n", identifier, lhs, rhs);
+            fprintf(code_output_file, "SUB LF@%s LF@%s LF@%s\n", result, lhs, rhs);
             break;
         case TT_ASTERISK:
-            fprintf(code_output_file, "MUL LF@%s LF@%s LF@%s\n", identifier, lhs, rhs);
+            fprintf(code_output_file, "MUL LF@%s LF@%s LF@%s\n", result, lhs, rhs);
             break;
         case TT_SLASH:
-            fprintf(code_output_file, "IDIV LF@%s LF@%s LF@%s\n", identifier, lhs, rhs);
+            fprintf(code_output_file, "IDIV LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            break;
+        case TT_LESS:
+            fprintf(code_output_file, "LT LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            break;
+        case TT_LESS_OR_EQUALS:
+            fprintf(code_output_file, "GT LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            fprintf(code_output_file, "NOT LF@%s LF@%s\n", result, result);
+            break;
+        case TT_EQUALS:
+            fprintf(code_output_file, "EQ LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            break;
+        case TT_NOT_EQUALS:
+            fprintf(code_output_file, "EQ LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            fprintf(code_output_file, "NOT LF@%s LF@%s\n", result, result);
+            break;
+        case TT_GREATER:
+            fprintf(code_output_file, "GT LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            break;
+        case TT_GREATER_OR_EQUALS:
+            fprintf(code_output_file, "LT LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            fprintf(code_output_file, "NOT LF@%s LF@%s\n", result, result);
+            break;
+        default:
+            fprintf(stderr, "Unsupported operation!");
+            return 1;
+    }
+    return 0;
+}
+
+int generate_arithmetic_operation_float(Token_type operation, char* result, char* lhs, char* rhs){
+    switch (operation) {
+        case TT_PLUS:
+            fprintf(code_output_file, "ADD LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            break;
+        case TT_MINUS:
+            fprintf(code_output_file, "SUB LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            break;
+        case TT_ASTERISK:
+            fprintf(code_output_file, "MUL LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            break;
+        case TT_SLASH:
+            fprintf(code_output_file, "DIV LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            break;
+        case TT_LESS:
+            fprintf(code_output_file, "LT LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            break;
+        case TT_LESS_OR_EQUALS:
+            fprintf(code_output_file, "GT LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            fprintf(code_output_file, "NOT LF@%s LF@%s\n", result, result);
+            break;
+        case TT_EQUALS:
+            fprintf(code_output_file, "EQ LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            break;
+        case TT_NOT_EQUALS:
+            fprintf(code_output_file, "EQ LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            fprintf(code_output_file, "NOT LF@%s LF@%s\n", result, result);
+            break;
+        case TT_GREATER:
+            fprintf(code_output_file, "GT LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            break;
+        case TT_GREATER_OR_EQUALS:
+            fprintf(code_output_file, "LT LF@%s LF@%s LF@%s\n", result, lhs, rhs);
+            fprintf(code_output_file, "NOT LF@%s LF@%s\n", result, result);
             break;
         default:
             fprintf(stderr, "Unsupported operation!");
