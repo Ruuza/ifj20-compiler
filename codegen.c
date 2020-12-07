@@ -525,3 +525,46 @@ int generate_arithmetic_operation_float(Token_type operation, char* result, char
     }
     return 0;
 }
+
+int generate_if_head(char* identifier, int if_counter){
+    fprintf(code_output_file, "JUMPIFEQ $IF_TRUE%d LF@%s bool@true\n", if_counter, identifier);
+    fprintf(code_output_file, "JUMP $IF_FALSE%d\n", if_counter);
+    return 0;
+}
+
+int generate_if_label(char* label_name, int if_counter){
+    fprintf(code_output_file, "LABEL $%s%d\n", label_name, if_counter);
+    return 0;
+}
+
+int generate_else_label(int else_counter){
+    fprintf(code_output_file, "LABEL $ELSE%d\n", else_counter);
+    return 0;
+}
+
+int generate_for_head(char* check_operand_identifier, int for_counter) {
+    fprintf(code_output_file, "JUMPIFEQ $CYCLE%d LF@%s bool@true\n", for_counter, check_operand_identifier);
+    fprintf(code_output_file, "JUMP $END%d\n", for_counter);
+    return 0;
+}
+
+int generate_for_label_end(int for_counter){
+    fprintf(code_output_file, "LABEL $END%d\n", for_counter);
+    return 0;
+}
+
+int generate_for_label_cycle(int for_counter){
+    fprintf(code_output_file, "LABEL $CYCLE%d\n", for_counter);
+    return 0;
+}
+
+int generate_for_iterate(char* check_operand_identifier, int for_counter){
+    fprintf(code_output_file, "JUMPIFEQ $CYCLE%d LF@%s bool@true\n", for_counter, check_operand_identifier);
+    fprintf(code_output_file, "JUMP $END%d\n", for_counter);
+    return 0;
+}
+
+int generate_else(char* identifier){
+    fprintf(code_output_file, "CALL $%s\n", identifier);
+    return 0;
+}

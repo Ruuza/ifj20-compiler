@@ -33,4 +33,21 @@ int generate_arithmetic_operation_string(Token_type operation, char* result, cha
 int generate_arithmetic_operation_int(Token_type operation, char* result, char* lhs, char* rhs);
 
 int generate_arithmetic_operation_float(Token_type operation, char* result, char* lhs, char* rhs);
+
+int generate_arithmetic_operation(Token_type operation, char* identifier, char* lhs, char* rhs);
+
+int generate_if_head(char* identifier, int if_counter);
+
+int generate_if_label(char* label_name, int if_counter);
+
+int generate_else_label(int else_counter);
+
+int generate_for_head(char* check_operand_identifier, int for_counter);
+
+int generate_for_label_end(int for_counter);
+
+int generate_for_label_cycle(int for_counter);
+
+int generate_for_iterate(char* check_operand_identifier, int for_counter);
+
 #endif //IFJ20C_CODEGEN_H
