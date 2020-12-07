@@ -267,6 +267,7 @@ int generate_token(Token* token){
                     token->token_type = TT_LESS_OR_EQUALS;
                 } else {
                     token->token_type = TT_LESS;
+                    ungetc(ch, inputFile);
                 }
                 free(line);
                 return 1;
@@ -275,6 +276,7 @@ int generate_token(Token* token){
                     token->token_type = TT_GREATER_OR_EQUALS;
                 } else {
                     token->token_type = TT_GREATER;
+                    ungetc(ch, inputFile);
                 }
                 free(line);
                 return 1;
@@ -283,6 +285,7 @@ int generate_token(Token* token){
                     token->token_type = TT_EQUALS;
                 } else {
                     token->token_type = TT_ASSIGNMENT;
+                    ungetc(ch, inputFile);
                 }
                 free(line);
                 return 1;
@@ -291,6 +294,7 @@ int generate_token(Token* token){
                     token->token_type = TT_DECLARATION_ASSIGNMENT;
                 } else{
                     token->token_type = TT_ERR;
+                    ungetc(ch, inputFile);
                 }
                 free(line);
                 return 1;
@@ -299,6 +303,7 @@ int generate_token(Token* token){
                     token->token_type = TT_NOT_EQUALS;
                 } else{
                     token->token_type = TT_ERR;
+                    ungetc(ch, inputFile);
                 }
                 free(line);
                 return 1;
