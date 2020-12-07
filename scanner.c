@@ -4,21 +4,39 @@
 #include <ctype.h>
 #include <string.h>
 #include "scanner.h"
+#include "token_stack.h"
+
+typedef struct{
+    Token* buffer;
+    int capacity;
+    int read_head;
+    int top;
+    int is_eof;
+}Token_buffer;
+
+int generate_token(Token* token);
 
 FILE* inputFile;
+Token_buffer tokenBuffer;
 
 int set_file(FILE* file){
     if (file == NULL){
         return -1;
     }
     inputFile = file;
+    tokenBuffer.capacity = 100;
+    tokenBuffer.buffer = malloc(sizeof(Token)*tokenBuffer.capacity);
+    tokenBuffer.top = -1;
+    tokenBuffer.read_head = -1;
+    tokenBuffer.is_eof = 0;
     return 0;
 }
 
 int rewind_file(){
-    rewind(inputFile);
+    tokenBuffer.read_head = -1;
+    tokenBuffer.is_eof = false;
     return 0;
-};
+}
 
 enum Scan_state{
     SCANSTATE_ERR,
@@ -90,6 +108,35 @@ int string_token_to_double(Token *token){
 }
 
 int next_token(Token* token){
+    if (tokenBuffer.is_eof){
+        return 0;
+    }
+    int return_value;
+    if (tokenBuffer.read_head < tokenBuffer.top){
+        // Already read the token in last pass. Just read it.
+        tokenBuffer.read_head++;
+        return_value = 1;
+    } else {
+        // Reading new token.
+        tokenBuffer.read_head++;
+        tokenBuffer.top++;
+        if (tokenBuffer.top >= tokenBuffer.capacity){
+            // Increase buffer size in required
+            tokenBuffer.capacity = (int)(tokenBuffer.capacity*1.5);
+            tokenBuffer.buffer = realloc(tokenBuffer.buffer, sizeof(Token)*tokenBuffer.capacity);
+        }
+        return_value = generate_token(&tokenBuffer.buffer[tokenBuffer.read_head]);
+    }
+    token->token_type = tokenBuffer.buffer[tokenBuffer.read_head].token_type;
+    token->attribute = tokenBuffer.buffer[tokenBuffer.read_head].attribute;
+    if (token->token_type == TT_EOF){
+        // Set EOF state
+        tokenBuffer.is_eof = true;
+    }
+    return return_value;
+}
+
+int generate_token(Token* token){
     if (inputFile == NULL){
         fprintf(stderr, "%s", "Invalid input file\n");
         return -1;

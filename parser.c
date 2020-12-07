@@ -438,7 +438,7 @@ int parse_expression_id(Symstack *symstack)
 
     char *local_name =
         malloc(sizeof(char) * strlen(identifier->token.attribute.string) + 1);
-    strcpy(local_name, token.attribute.string);
+    strcpy(local_name, identifier->token.attribute.string);
     Symtable_item* variable = Symtable_stack_lookup(symtable_stack, local_name);
     if (variable == NULL){
         return SEMANTIC_ERROR_UNDEFINED_VARIABLE;
@@ -655,6 +655,9 @@ void function_call(Symtable_item* function){
 }
 
 int function_call_return(Symtable_item* function) {
+    if (function == NULL){
+        return SEMANTIC_ERROR_FUNCTION;
+    }
     for (int i = 0; i < function->parameter_count; i++) {
         Symtable_item *identifier = Symtable_search(*Symtable_stack_head(symtable_stack), idStack.tokens[i].attribute.string);
         if (identifier != NULL) {
@@ -674,7 +677,7 @@ int function_call_return(Symtable_item* function) {
         generate_move("LF@", idStack.tokens[i].attribute.string, "TF@%retval", argument);
         expression_result_stack->stack[i]->parameters[i];
     }
-    return 0;
+    return OK;
 }
 
     int Declr()
@@ -715,7 +718,7 @@ int function_call_return(Symtable_item* function) {
         if (expression_result_stack->stack[i]->isfunction){
             // Obtain full global function item from "reference"
             Symtable_item *called_function = Symtable_search(global_symbol_table, expression_result_stack->stack[i]->token.attribute.string);
-            function_call_return(called_function);
+            CHECK_AND_CALL_FUNCTION(function_call_return(called_function))
         } else {
             Symtable_item* identifier = Symtable_stack_lookup(symtable_stack, idStack.tokens[lvalue_counter].attribute.string);
             if (identifier == NULL){
@@ -1155,12 +1158,17 @@ int Func()
     Symtable_init(&func);
     Symtable_stack_insert(symtable_stack, func);
 
-    CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
-    char *function_identifier = malloc(sizeof(*token.attribute.string) * strlen(token.attribute.string) + 1);
-    current_function = Symtable_search(global_symbol_table, token.attribute.string);
-    strcpy(function_identifier, token.attribute.string);
-    generate_func_top(token.attribute.string);
-    generate_return_values(current_function);
+    char *function_identifier;
+    if (token.token_type == TT_IDENTIFIER){
+        function_identifier = malloc(sizeof(*token.attribute.string) * strlen(token.attribute.string) + 1);
+        current_function = Symtable_search(global_symbol_table, token.attribute.string);
+        strcpy(function_identifier, token.attribute.string);
+        generate_func_top(token.attribute.string);
+        generate_return_values(current_function);
+    } else {
+        return SYNTAX_ERROR;
+    }
+    NEXT()
 
     CHECK_AND_LOAD_TOKEN(TT_OPEN_PARENTHESES);
 
@@ -1240,12 +1248,16 @@ int Preamble()
 
     EOL_allowed = true;
 
-    CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
-    char *package_id_name = "main";
-    if (strcmp(token.attribute.string, package_id_name) != 0)
-    {
-        return SEMANTIC_ERROR_OTHERS;
+    if (token.token_type == TT_IDENTIFIER){
+        char *package_id_name = "main";
+        if (strcmp(token.attribute.string, package_id_name) != 0)
+        {
+            return SEMANTIC_ERROR_OTHERS;
+        }
+    } else {
+        return SYNTAX_ERROR;
     }
+    NEXT()
 
     if (is_EOL != true)
     {
@@ -1304,10 +1316,14 @@ int fast_func()
     EOL_allowed = false;
 
     CHECK_AND_LOAD_TOKEN(TT_KEYWORD_FUNC);
-    CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
-    function_name = malloc(sizeof(*token.attribute.string) * strlen(token.attribute.string) + 1);
-    strcpy(function_name, token.attribute.string);
-    function->token.attribute.string = function_name;
+    if (token.token_type == TT_IDENTIFIER){
+        function_name = malloc(sizeof(*token.attribute.string) * strlen(token.attribute.string) + 1);
+        strcpy(function_name, token.attribute.string);
+        function->token.attribute.string = function_name;
+    } else {
+        return SYNTAX_ERROR;
+    }
+    NEXT()
 
     CHECK_AND_LOAD_TOKEN(TT_OPEN_PARENTHESES);
     CHECK_AND_CALL_FUNCTION(fast_params(function));
@@ -1368,18 +1384,22 @@ int fast_params(Symtable_item *function)
 int fast_param(Symtable_item *function)
 {
     // Rule: <param> -> id <data_type>
-    CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
-    function->parameter_count++;
-    if (function->parameters == NULL)
-    {
-        function->parameters = malloc(sizeof(Parameter) * function->parameter_count);
+    if (token.token_type == TT_IDENTIFIER){
+        function->parameter_count++;
+        if (function->parameters == NULL)
+        {
+            function->parameters = malloc(sizeof(Parameter) * function->parameter_count);
+        }
+        else
+        {
+            function->parameters = realloc(function->parameters, sizeof(Parameter) * function->parameter_count);
+        }
+        function->parameters[function->parameter_count - 1].identifier = malloc(sizeof(*token.attribute.string) * strlen(token.attribute.string) + 1);
+        strcpy(function->parameters[function->parameter_count - 1].identifier, token.attribute.string);
+    } else {
+        return SYNTAX_ERROR;
     }
-    else
-    {
-        function->parameters = realloc(function->parameters, sizeof(Parameter) * function->parameter_count);
-    }
-    function->parameters[function->parameter_count - 1].identifier = malloc(sizeof(*token.attribute.string) * strlen(token.attribute.string) + 1);
-    strcpy(function->parameters[function->parameter_count - 1].identifier, token.attribute.string);
+    NEXT()
     switch (token.token_type)
     {
     case TT_KEYWORD_FLOAT64:
@@ -1394,7 +1414,7 @@ int fast_param(Symtable_item *function)
     default:
         return SYNTAX_ERROR;
     }
-    NEXT();
+    NEXT()
     return OK;
 }
 
