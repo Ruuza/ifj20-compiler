@@ -5,7 +5,7 @@
  * 
  * @author Petr Růžanský <xruzan00>
  *         Radek Maňák <xmanak20>
- *         Adrián Babola <xbabol00>
+ *         Adrián Bobola <xbobol00>
  * 
  */
 
@@ -34,6 +34,10 @@ int global_temporary_variable_counter = 0;
 int param_counter;
 Symstack *expression_result_stack;
 Symtable_stack *symtable_stack;
+int if_counter = 0;
+int compare_counter = 0;
+int for_counter = 0;
+int else_counter = 0;
 
 tTokenStack idStack;
 
@@ -195,6 +199,8 @@ int Id_n()
 
 int Else()
 {
+    else_counter++;
+    int local_else_counter = else_counter;
     switch (token.token_type)
     {
         // case TT_IDENTIFIER:
@@ -213,6 +219,7 @@ int Else()
         CHECK_AND_LOAD_TOKEN(TT_KEYWORD_ELSE);
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
+        generate_else_label(local_else_counter);
         Symtable_node_ptr localtab_else = NULL;
         Symtable_init(&localtab_else);
         Symtable_stack_insert(symtable_stack, localtab_else);
@@ -888,6 +895,10 @@ int Func_param()
 
 int State()
 {
+    if_counter++;
+    for_counter++;
+    int local_counter_if = if_counter;
+    int local_counter_for = for_counter;
     Symtable_node_ptr localtab_if_for = NULL;
     Symtable_init(&localtab_if_for);
     Symtable_node_ptr stack_pop_helper = NULL;
@@ -906,8 +917,14 @@ int State()
         CHECK_AND_LOAD_TOKEN(TT_KEYWORD_IF);
 
         CHECK_AND_CALL_FUNCTION(Expresion());
+        char* labelname_if;
+        Symtable_item* helper_if = Symstack_pop(expression_result_stack);
+        char* expresion_result_if = helper_if->token.attribute.string;
+        generate_if_head(expresion_result_if, local_counter_if);
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
+        labelname_if = "TRUE";
+        generate_if_label(labelname_if, local_counter_if);
         Symtable_stack_insert(symtable_stack, localtab_if_for);
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
@@ -915,7 +932,12 @@ int State()
         CHECK_AND_LOAD_TOKEN(TT_CLOSE_BRACES);
         stack_pop_helper = Symtable_stack_pop(symtable_stack);
         Symtable_dispose(&stack_pop_helper);
+        stack_pop_helper = Symtable_stack_pop(symtable_stack);
+        Symtable_dispose(&stack_pop_helper);
+        labelname_if = "FALSE";
+        generate_if_label(labelname_if, local_counter_if);
         CHECK_AND_CALL_FUNCTION(Else());
+        free_symtable_item(helper_if);
 
         return OK;
         break;
@@ -927,16 +949,24 @@ int State()
         CHECK_AND_CALL_FUNCTION(For_declr());
 
         CHECK_AND_CALL_FUNCTION(Expresion());
+        Symtable_item* helper_for_expr1 = Symstack_pop(expression_result_stack);
+        char* expresion1_result_for = helper_for_expr1->token.attribute.string;
+        generate_for_head(expresion1_result_for, local_counter_for);
 
         CHECK_AND_LOAD_TOKEN(TT_SEMICOLON);
 
         CHECK_AND_CALL_FUNCTION(Expresion());
+        Symtable_item* helper_for_expr2 = Symstack_pop(expression_result_stack);
+        char* expresion2_result_for = helper_for_expr2->token.attribute.string;
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
         Symtable_stack_insert(symtable_stack, localtab_if_for);
+        generate_for_label_cycle(local_counter_for); //label CYCLE
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
 
+        generate_for_iterate(expresion2_result_for, local_counter_for);
+        generate_for_label_end(for_counter);
         CHECK_AND_LOAD_TOKEN(TT_CLOSE_BRACES);
         stack_pop_helper = Symtable_stack_pop(symtable_stack);
         Symtable_dispose(&stack_pop_helper);
