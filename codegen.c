@@ -412,16 +412,16 @@ int generate_return_move(char* identifier, int position){
 int generate_arithmetic_operation(Token_type operation, char* identifier, char* lhs, char* rhs){
     switch (operation) {
         case TT_PLUS:
-            fprintf(code_output_file, "ADD %s %s %s\n", identifier, lhs, rhs);
+            fprintf(code_output_file, "ADD LF@%s LF@%s LF@%s\n", identifier, lhs, rhs);
             break;
         case TT_MINUS:
-            fprintf(code_output_file, "SUB %s %s %s\n", identifier, lhs, rhs);
+            fprintf(code_output_file, "SUB LF@%s LF@%s LF@%s\n", identifier, lhs, rhs);
             break;
         case TT_ASTERISK:
-            fprintf(code_output_file, "MUL %s %s %s\n", identifier, lhs, rhs);
+            fprintf(code_output_file, "MUL LF@%s LF@%s LF@%s\n", identifier, lhs, rhs);
             break;
         case TT_SLASH:
-            fprintf(code_output_file, "IDIV %s %s %s\n", identifier, lhs, rhs);
+            fprintf(code_output_file, "IDIV LF@%s LF@%s LF@%s\n", identifier, lhs, rhs);
             break;
         default:
             fprintf(stderr, "Unsupported operation!");
