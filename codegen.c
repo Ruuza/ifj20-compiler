@@ -405,7 +405,7 @@ int generate_push(char* dest_frame, char* variable){
 }
 
 int generate_return_move(char* identifier, int position){
-    fprintf(code_output_file, "MOVE LF@%%retval%d %s\n", position, identifier);
+    fprintf(code_output_file, "MOVE LF@%%retval%d %s%s\n", position, "LF@", identifier);
     return 0;
 }
 

@@ -181,10 +181,11 @@ int Id_n()
 
         return OK;
     case TT_ASSIGNMENT:
+    case TT_DECLARATION_ASSIGNMENT:
+    case TT_OPEN_PARENTHESES:
         // Rule: <id_n> -> eps
 
         return OK;
-        break;
 
     default:
         return SYNTAX_ERROR;
@@ -612,6 +613,7 @@ int Expression_n()
     switch (token.token_type)
     {
     case TT_CLOSE_BRACES:
+    case TT_EOL:
         // Rule: <Expression_n> -> eps
         return OK;
     case TT_COMMA:
@@ -680,13 +682,9 @@ int function_call_return(Symtable_item* function) {
     return OK;
 }
 
-    int Declr()
-    {
-        // Rule: <declr> -> := <expr>
-        CHECK_AND_LOAD_TOKEN(TT_DECLARATION_ASSIGNMENT)
-
-        if (token.token_type == TT_IDENTIFIER){
-            Symtable_item* function = Symtable_search(global_symbol_table, token.attribute.string);
+int expression_or_function_call(){
+    if (token.token_type == TT_IDENTIFIER){
+        Symtable_item* function = Symtable_search(global_symbol_table, token.attribute.string);
         if (function != NULL){
             // Is function. Call move parameters to temporary frame and call it.
             CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
@@ -712,7 +710,10 @@ int function_call_return(Symtable_item* function) {
     if (!is_EOL){
         CHECK_AND_CALL_FUNCTION(Expression_n())
     }
+    return OK;
+}
 
+int move_return_values_from_function(bool declaration_forbidden){
     int lvalue_counter = 0;
     for (int i = 0; i <= expression_result_stack->top; ++i) {
         if (expression_result_stack->stack[i]->isfunction){
@@ -722,6 +723,9 @@ int function_call_return(Symtable_item* function) {
         } else {
             Symtable_item* identifier = Symtable_stack_lookup(symtable_stack, idStack.tokens[lvalue_counter].attribute.string);
             if (identifier == NULL){
+                if (declaration_forbidden){
+                    return SEMANTIC_ERROR_UNDEFINED_VARIABLE;
+                }
                 generate_declaration("LF@", idStack.tokens[lvalue_counter].attribute.string);
                 identifier = create_item();
                 identifier->token.token_type = TT_IDENTIFIER;
@@ -740,6 +744,16 @@ int function_call_return(Symtable_item* function) {
     }
     Symstack_dispose(&expression_result_stack);
     Symstack_init(&expression_result_stack);
+    return OK;
+}
+
+int Declr() {
+    // Rule: <declr> -> := <expr>
+    CHECK_AND_LOAD_TOKEN(TT_DECLARATION_ASSIGNMENT)
+
+    CHECK_AND_CALL_FUNCTION(expression_or_function_call());
+
+    CHECK_AND_CALL_FUNCTION(move_return_values_from_function(false))
 
     return OK;
 }
@@ -837,7 +851,7 @@ int State()
     case TT_IDENTIFIER:
         // Rule: <state> -> id <state_id>
         tokenStackPush(&idStack, token);
-        CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER)
+        NEXT()
         CHECK_AND_CALL_FUNCTION(State_id())
         break;
 
@@ -891,6 +905,12 @@ int State()
         CHECK_AND_CALL_FUNCTION(Expresion())
 
         CHECK_AND_CALL_FUNCTION(Expression_n())
+        if (token.token_type == TT_EOL){
+            NEXT()
+            is_EOL = true;
+        } else {
+            return SYNTAX_ERROR;
+        }
 
         if (current_function->return_values_count != expression_result_stack->top + 1)
         {
@@ -923,16 +943,27 @@ int State()
 }
 
 int State_id(){
-    if (token.token_type == TT_DECLARATION_ASSIGNMENT)
-    {
-        // Rule: <state_id> -> <declr>
+    CHECK_AND_CALL_FUNCTION(Id_n())
+    if (token.token_type == TT_DECLARATION_ASSIGNMENT) {
+        // Rule: <state_id> -> <Id_n> := <declr>
 
         CHECK_AND_CALL_FUNCTION(Declr())
         return OK;
-    }
-    else if (token.token_type == TT_OPEN_PARENTHESES)
-    {
+    } else if (token.token_type == TT_ASSIGNMENT) {
+        // Rule: <state_id> -> <Id_n> = <expr>
+
+        CHECK_AND_LOAD_TOKEN(TT_ASSIGNMENT)
+        CHECK_AND_CALL_FUNCTION(expression_or_function_call());
+        CHECK_AND_CALL_FUNCTION(move_return_values_from_function(true))
+
+        return OK;
+    } else if (token.token_type == TT_OPEN_PARENTHESES) {
         // Rule: <state_id> -> ( <func_param> )
+        if (idStack.top != 0){
+            return SYNTAX_ERROR;
+            // Function call in lvalue
+            // eg: id, call() :=
+        }
         CHECK_AND_LOAD_TOKEN(TT_OPEN_PARENTHESES)
         CHECK_AND_CALL_FUNCTION(Func_param())
         CHECK_AND_LOAD_TOKEN(TT_CLOSE_PARENTHESES)
@@ -944,17 +975,8 @@ int State_id(){
 
         return OK;
     }
-    else if (token.token_type == TT_COMMA)
-    {
-        // Rule: <state_id> -> <Id_n> = <expr>
 
-        CHECK_AND_CALL_FUNCTION(Id_n())
-        CHECK_AND_LOAD_TOKEN(TT_ASSIGNMENT)
-        CHECK_AND_CALL_FUNCTION(Expresion())
-        return OK;
-    }
-
-    return OK;
+    return SYNTAX_ERROR;
 }
 
 int State_data_type()
