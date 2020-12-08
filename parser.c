@@ -1403,7 +1403,7 @@ int insert_builtins(){
 
     Symtable_item* inputs = create_item();
     inputs->token.attribute.string = malloc(sizeof(char)*strlen("inputs")+1);
-    strcpy(print->token.attribute.string, "inputs");
+    strcpy(inputs->token.attribute.string, "inputs");
     inputs->isfunction = true;
     inputs->parameter_count = 0;
     inputs->return_values_count = 2;
@@ -1413,7 +1413,7 @@ int insert_builtins(){
 
     Symtable_item* inputi = create_item();
     inputi->token.attribute.string = malloc(sizeof(char)*strlen("inputi")+1);
-    strcpy(print->token.attribute.string, "inputi");
+    strcpy(inputi->token.attribute.string, "inputi");
     inputi->isfunction = true;
     inputi->parameter_count = 0;
     inputi->return_values_count = 2;
@@ -1423,7 +1423,7 @@ int insert_builtins(){
 
     Symtable_item* inputf = create_item();
     inputf->token.attribute.string = malloc(sizeof(char)*strlen("inputf")+1);
-    strcpy(print->token.attribute.string, "inputf");
+    strcpy(inputf->token.attribute.string, "inputf");
     inputf->isfunction = true;
     inputf->parameter_count = 0;
     inputf->return_values_count = 2;
@@ -1433,7 +1433,7 @@ int insert_builtins(){
 
     Symtable_item* int2float = create_item();
     int2float->token.attribute.string = malloc(sizeof(char)*strlen("int2float")+1);
-    strcpy(print->token.attribute.string, "int2float");
+    strcpy(int2float->token.attribute.string, "int2float");
     int2float->isfunction = true;
     int2float->parameter_count = 1;
     int2float->return_values_count = 1;
@@ -1444,7 +1444,7 @@ int insert_builtins(){
 
     Symtable_item* float2int = create_item();
     float2int->token.attribute.string = malloc(sizeof(char)*strlen("float2int")+1);
-    strcpy(print->token.attribute.string, "float2int");
+    strcpy(float2int->token.attribute.string, "float2int");
     float2int->isfunction = true;
     float2int->parameter_count = 1;
     float2int->return_values_count = 1;
@@ -1455,7 +1455,7 @@ int insert_builtins(){
 
     Symtable_item* len = create_item();
     len->token.attribute.string = malloc(sizeof(char)*strlen("len")+1);
-    strcpy(print->token.attribute.string, "len");
+    strcpy(len->token.attribute.string, "len");
     len->isfunction = true;
     len->parameter_count = 1;
     len->return_values_count = 1;
@@ -1466,7 +1466,7 @@ int insert_builtins(){
 
     Symtable_item* substr = create_item();
     substr->token.attribute.string = malloc(sizeof(char)*strlen("substr")+1);
-    strcpy(print->token.attribute.string, "substr");
+    strcpy(substr->token.attribute.string, "substr");
     substr->isfunction = true;
     substr->parameter_count = 3;
     substr->return_values_count = 2;
@@ -1480,7 +1480,7 @@ int insert_builtins(){
 
     Symtable_item* ord = create_item();
     ord->token.attribute.string = malloc(sizeof(char)*strlen("ord")+1);
-    strcpy(print->token.attribute.string, "ord");
+    strcpy(ord->token.attribute.string, "ord");
     ord->isfunction = true;
     ord->parameter_count = 2;
     ord->return_values_count = 2;
@@ -1493,7 +1493,7 @@ int insert_builtins(){
 
     Symtable_item *chr = create_item();
     chr->token.attribute.string = malloc(sizeof(char)*strlen("chr")+1);
-    strcpy(print->token.attribute.string, "chr");
+    strcpy(chr->token.attribute.string, "chr");
     chr->isfunction = true;
     chr->parameter_count = 1;
     chr->return_values_count = 2;
