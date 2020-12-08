@@ -34,10 +34,7 @@ int global_temporary_variable_counter = 0;
 int param_counter;
 Symstack *expression_result_stack;
 Symtable_stack *symtable_stack;
-int if_counter = 0;
-int compare_counter = 0;
-int for_counter = 0;
-int else_counter = 0;
+int control_flow_counter = 0;
 
 tTokenStack idStack;
 
@@ -199,8 +196,6 @@ int Id_n()
 
 int Else()
 {
-    else_counter++;
-    int local_else_counter = else_counter;
     switch (token.token_type)
     {
         // case TT_IDENTIFIER:
@@ -219,7 +214,6 @@ int Else()
         CHECK_AND_LOAD_TOKEN(TT_KEYWORD_ELSE);
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
-        generate_else_label(local_else_counter);
         Symtable_node_ptr localtab_else = NULL;
         Symtable_init(&localtab_else);
         Symtable_stack_insert(symtable_stack, localtab_else);
@@ -610,11 +604,6 @@ int Expresion()
         }
         else
         {
-            if (token.token_type == TT_OPEN_PARENTHESES){
-                parentheses_depth++;
-            } else if (token.token_type == TT_CLOSE_PARENTHESES){
-                parentheses_depth--;
-            }
             b->token.token_type = token.token_type;
             b->token.attribute = token.attribute;
         }
@@ -622,6 +611,11 @@ int Expresion()
         {
         case PRECEDENCE_E:
             Symstack_insert(symstack, b);
+            if (token.token_type == TT_OPEN_PARENTHESES){
+                parentheses_depth++;
+            } else if (token.token_type == TT_CLOSE_PARENTHESES){
+                parentheses_depth--;
+            }
             if (!end_found)
             {
                 NEXT_WITH_EOL()
@@ -630,6 +624,11 @@ int Expresion()
         case PRECEDENCE_L:
             insert_shift(symstack, a);
             Symstack_insert(symstack, b);
+            if (token.token_type == TT_OPEN_PARENTHESES){
+                parentheses_depth++;
+            } else if (token.token_type == TT_CLOSE_PARENTHESES){
+                parentheses_depth--;
+            }
             if (!end_found)
             {
                 NEXT_WITH_EOL()
@@ -895,10 +894,6 @@ int Func_param()
 
 int State()
 {
-    if_counter++;
-    for_counter++;
-    int local_counter_if = if_counter;
-    int local_counter_for = for_counter;
     Symtable_node_ptr localtab_if_for = NULL;
     Symtable_init(&localtab_if_for);
     Symtable_node_ptr stack_pop_helper = NULL;
@@ -916,28 +911,28 @@ int State()
 
         CHECK_AND_LOAD_TOKEN(TT_KEYWORD_IF);
 
-        CHECK_AND_CALL_FUNCTION(Expresion());
-        char* labelname_if;
-        Symtable_item* helper_if = Symstack_pop(expression_result_stack);
-        char* expresion_result_if = helper_if->token.attribute.string;
-        generate_if_head(expresion_result_if, local_counter_if);
+        CHECK_AND_CALL_FUNCTION(Expresion())
+        int if_number = ++control_flow_counter;
+        Symtable_item* expression_result = Symstack_pop(expression_result_stack);
+        if (expression_result->dataType[0] != DT_BOOL){
+            fprintf(stderr, "If did not get expression result of type bool\n");
+            return SEMANTIC_ERROR_TYPE_COMPATIBILITY;
+        }
+        char* expresion_result = expression_result->token.attribute.string;
+        generate_if_head(expresion_result, if_number);
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
-        labelname_if = "TRUE";
-        generate_if_label(labelname_if, local_counter_if);
         Symtable_stack_insert(symtable_stack, localtab_if_for);
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
 
         CHECK_AND_LOAD_TOKEN(TT_CLOSE_BRACES);
+        generate_if_middle(if_number);
         stack_pop_helper = Symtable_stack_pop(symtable_stack);
-        Symtable_dispose(&stack_pop_helper);
-        stack_pop_helper = Symtable_stack_pop(symtable_stack);
-        Symtable_dispose(&stack_pop_helper);
-        labelname_if = "FALSE";
-        generate_if_label(labelname_if, local_counter_if);
+        Symtable_dispose(&stack_pop_helper); // Pop true frame
         CHECK_AND_CALL_FUNCTION(Else());
-        free_symtable_item(helper_if);
+        generate_if_end(if_number);
+        free_symtable_item(expression_result);
 
         return OK;
         break;

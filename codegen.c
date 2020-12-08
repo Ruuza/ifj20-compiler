@@ -526,19 +526,22 @@ int generate_arithmetic_operation_float(Token_type operation, char* result, char
     return 0;
 }
 
-int generate_if_head(char* identifier, int if_counter){
-    fprintf(code_output_file, "JUMPIFEQ $IF_TRUE%d %s bool@true\n", if_counter, identifier);
-    fprintf(code_output_file, "JUMP $IF_FALSE%d\n", if_counter);
+int generate_if_head(char* compare_variable, int number){
+    fprintf(code_output_file, "JUMPIFEQ $$IF_FALSE%d %s bool@false\n", number, compare_variable);
+    fprintf(code_output_file, "# True%d\n", number);
     return 0;
 }
 
-int generate_if_label(char* label_name, int if_counter){
-    fprintf(code_output_file, "LABEL $%s%d\n", label_name, if_counter);
+int generate_if_middle(int number){
+    fprintf(code_output_file, "JUMP $$IF_END%d\n", number);
+    fprintf(code_output_file, "LABEL $$IF_FALSE%d\n", number);
+    fprintf(code_output_file, "# False%d\n", number);
     return 0;
 }
 
-int generate_else_label(int else_counter){
-    fprintf(code_output_file, "LABEL $ELSE%d\n", else_counter);
+int generate_if_end(int number){
+    fprintf(code_output_file, "LABEL $$IF_END%d\n", number);
+    fprintf(code_output_file, "# end%d\n", number);
     return 0;
 }
 

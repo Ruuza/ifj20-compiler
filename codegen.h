@@ -36,11 +36,11 @@ int generate_arithmetic_operation_float(Token_type operation, char* result, char
 
 int generate_arithmetic_operation(Token_type operation, char* identifier, char* lhs, char* rhs);
 
-int generate_if_head(char* identifier, int if_counter);
+int generate_if_head(char* compare_variable, int number);
 
-int generate_if_label(char* label_name, int if_counter);
+int generate_if_middle(int number);
 
-int generate_else_label(int else_counter);
+int generate_if_end(int number);
 
 int generate_for_head(char* check_operand_identifier, int for_counter);
 
