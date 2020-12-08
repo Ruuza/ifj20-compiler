@@ -15,6 +15,7 @@ int generate_len();
 int generate_substr();
 int generate_ord();
 int generate_chr();
+int generate_builtin_function(char *function_identifier);
 
 int set_code_output(FILE *file) {
     if (file == NULL){
@@ -29,6 +30,8 @@ int generate_header() {
     fprintf(code_output_file, "JUMP $$main\n\n");
 
     generate_print();
+    char* id = "chr";
+    generate_builtin_function(id);
     return 0;
 }
 
