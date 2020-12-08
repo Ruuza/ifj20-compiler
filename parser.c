@@ -940,6 +940,8 @@ int State()
 
     case TT_KEYWORD_FOR:
         // Rule: <state> -> for <for_declr> <expr> ; <expr> { <stat_list> }
+        fprintf(stderr, "For loop is not supported!");
+        return SYNTAX_ERROR;
         CHECK_AND_LOAD_TOKEN(TT_KEYWORD_FOR);
 
         CHECK_AND_CALL_FUNCTION(For_declr());
@@ -947,7 +949,7 @@ int State()
         CHECK_AND_CALL_FUNCTION(Expresion());
         Symtable_item* helper_for_expr1 = Symstack_pop(expression_result_stack);
         char* expresion1_result_for = helper_for_expr1->token.attribute.string;
-        generate_for_head(expresion1_result_for, local_counter_for);
+        //generate_for_head(expresion1_result_for, local_counter_for);
 
         CHECK_AND_LOAD_TOKEN(TT_SEMICOLON);
 
@@ -957,12 +959,12 @@ int State()
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
         Symtable_stack_insert(symtable_stack, localtab_if_for);
-        generate_for_label_cycle(local_counter_for); //label CYCLE
+        //generate_for_label_cycle(local_counter_for); //label CYCLE
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
 
-        generate_for_iterate(expresion2_result_for, local_counter_for);
-        generate_for_label_end(for_counter);
+        //generate_for_iterate(expresion2_result_for, local_counter_for);
+        //generate_for_label_end(for_counter);
         CHECK_AND_LOAD_TOKEN(TT_CLOSE_BRACES);
         stack_pop_helper = Symtable_stack_pop(symtable_stack);
         Symtable_dispose(&stack_pop_helper);
