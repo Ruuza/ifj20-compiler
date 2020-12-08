@@ -1,0 +1,48 @@
+\documentclass{article}
+\usepackage[czech]{babel}
+\usepackage[utf8]{inputenc}
+
+\begin{document}
+\begin{table}[]
+\begin{tabular}{l|l}
+\textless{}start\textgreater{}          & \textless{}preamble\textgreater \textless{}body\textgreater{}                                                                                        \\
+\textless{}preamble\textgreater{}       & package id                                                                                                                                           \\
+\textless{}body\textgreater{}           & \textless{}func\textgreater \textless{}body\textgreater{}                                                                                            \\
+\textless{}body\textgreater{}           & EOF                                                                                                                                                  \\
+\textless{}func\textgreater{}           & func id ( \textless{}params\textgreater ) \textless{}ret\_types\textgreater \{ \textless{}state\_list\textgreater \}                                 \\
+\textless{}params\textgreater{}         & eps                                                                                                                                                  \\
+\textless{}params\textgreater{}         & \textless{}param\textgreater \textless{}params\_n\textgreater{}                                                                                      \\
+\textless{}params\_n\textgreater{}      & eps                                                                                                                                                  \\
+\textless{}params\_n\textgreater{}      & , \textless{}param\textgreater \textless{}params\_n\textgreater{}                                                                                    \\
+\textless{}param\textgreater{}          & id \textless{}data\_type\textgreater{}                                                                                                               \\
+\textless{}ret\_types\textgreater{}     & eps                                                                                                                                                  \\
+\textless{}ret\_types\textgreater{}     & \textless{}data\_type\textgreater{}                                                                                                                  \\
+\textless{}ret\_types\textgreater{}     & ( \textless{}types\textgreater )                                                                                                                     \\
+\textless{}types\textgreater{}          & eps                                                                                                                                                  \\
+\textless{}types\textgreater{}          & \textless{}data\_type\textgreater \textless{}types\_n\textgreater{}                                                                                  \\
+\textless{}types\_n\textgreater{}       & eps                                                                                                                                                  \\
+\textless{}types\_n\textgreater{}       & , \textless{}data\_type\textgreater \textless{}types\_n\textgreater{}                                                                                \\
+\textless{}data\_type\textgreater{}     & int                                                                                                                                                  \\
+\textless{}data\_type\textgreater{}     & string                                                                                                                                               \\
+\textless{}data\_type\textgreater{}     & float64                                                                                                                                              \\
+\textless{}state\_list\textgreater{}    & eps                                                                                                                                                  \\
+\textless{}state\_list\textgreater{}    & \textless{}state\textgreater \textless{}state\_list\textgreater{}                                                                                    \\
+\textless{}state\textgreater{}          & \textless{}declr\textgreater{}                                                                                                                       \\
+\textless{}state\textgreater{}          & if \textless{}expression\textgreater \{ \textless{}state\_list\textgreater \} \textless{}else\textgreater{}                                          \\
+\textless{}state\textgreater{}          & for \textless{}for\_declr\textgreater \textless{}expression\textgreater ; \textless{}expression\textgreater \{ \textless{}state\_list\textgreater \} \\
+\textless{}state\textgreater{}          & return \textless{}expression\textgreater{}                                                                                                           \\
+\textless{}state\textgreater{}          & id ( \textless{}func\_param\textgreater )                                                                                                            \\
+\textless{}state\textgreater{}          & id \textless{}id\_n\textgreater = \textless{}expr\textgreater{}                                                                                      \\
+\textless{}id\_n\textgreater{}          & eps                                                                                                                                                  \\
+\textless{}id\_n\textgreater{}          & , id \textless{}id\_n\textgreater{}                                                                                                                  \\
+\textless{}func\_param\textgreater{}    & eps                                                                                                                                                  \\
+\textless{}func\_param\textgreater{}    & \textless{}expr\textgreater \textless{}func\_param\_n\textgreater{}                                                                                  \\
+\textless{}func\_param\_n\textgreater{} & eps                                                                                                                                                  \\
+\textless{}func\_param\_n\textgreater{} & , \textless{}expr\textgreater \textless{}func\_param\_n\textgreater{}                                                                                \\
+\textless{}declr\textgreater{}          & id := \textless{}expression\textgreater{}                                                                                                            \\
+\textless{}for\_declr\textgreater{}     & id := \textless{}expression\textgreater{}                                                                                                            \\
+\textless{}for\_declr\textgreater{}     & ;                                                                                                                                                    \\
+\textless{}else\textgreater{}           & else \{ \textless{}state\_list\textgreater \}                                                                                           
+\end{tabular}
+\end{table}
+\end{document}
