@@ -325,7 +325,7 @@ int parse_expression_binary_operation(Symstack *symstack, int operator_pos)
     sprintf(nonterminal_identifier, "expr-var%d", global_temporary_variable_counter++);
     generate_declaration("LF@", nonterminal_identifier);
     if (left_item->dataType[0] != right_item->dataType[0]){
-        fprintf(stderr, "%s does not have the same type as %s",
+        fprintf(stderr, "%s does not have the same type as %s\n",
                 left_item->token.attribute.string, right_item->token.attribute.string);
         return SEMANTIC_ERROR_TYPE_COMPATIBILITY;
     }
@@ -530,6 +530,7 @@ int parse_expresion_rule(Symstack *symstack, int shift_pos)
         case TT_LESS_OR_EQUALS:
         case TT_GREATER:
         case TT_GREATER_OR_EQUALS:
+        case TT_NOT_EQUALS:
         case TT_EQUALS:
             // E -> E compare E
             return parse_expression_binary_operation(symstack, current_pos);
