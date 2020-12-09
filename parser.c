@@ -722,7 +722,7 @@ int Expression_n()
     return OK;
 }
 
-void function_call(Symtable_item *function)
+int function_call(Symtable_item *function)
 {
     generate_frame();
     if (strcmp(function->token.attribute.string, "print") == 0)
@@ -739,8 +739,16 @@ void function_call(Symtable_item *function)
     }
     else
     {
+        if (function->parameter_count != expression_result_stack->top+1){
+            fprintf(stderr, "Function called with wrong number of parameters");
+            return SEMANTIC_ERROR_FUNCTION;
+        }
         for (int i = 0; i <= expression_result_stack->top; ++i)
         {
+            if (expression_result_stack->stack[i]->dataType[i] != function->parameters[i].dataType){
+                fprintf(stderr, "Incorrect datatype of parameter number %d while calling function %s\n", i+1, function->token.attribute.string);
+                return SEMANTIC_ERROR_FUNCTION;
+            }
             char argument[10];
             sprintf(argument, "%%%d", i + 1);
             generate_declaration("TF@", argument);
@@ -753,13 +761,15 @@ void function_call(Symtable_item *function)
     // Create objecct with called function name and store in expression result
     Symtable_item* function_result = create_item_copy(function);
     Symstack_insert(expression_result_stack, function_result);
+    return OK;
 }
 
 int function_call_return(Symtable_item* function, bool declaration_forbidden, int starting_id) {
     if (function == NULL){
         return SEMANTIC_ERROR_FUNCTION;
     }
-    for (int i = starting_id; i < function->return_values_count; i++) {
+    int param_pos = 0;
+    for (int i = starting_id; i < function->return_values_count; i++, param_pos++) {
         if (i > idStack.top){
             fprintf(stderr, "Left side of assignment has %d value but function returns %d\n",
                     idStack.top+1, function->return_values_count);
@@ -782,14 +792,20 @@ int function_call_return(Symtable_item* function, bool declaration_forbidden, in
             generate_declaration("LF@", idStack.tokens[i].attribute.string);
             identifier = create_item();
             identifier->token.token_type = TT_IDENTIFIER;
+            identifier->dataType[0] = function->dataType[param_pos];
             identifier->token.attribute.string = malloc(
                     sizeof(char) * strlen(idStack.tokens[i].attribute.string) + 1);
-            identifier->dataType[0] = function->parameters[i].dataType;
             strcpy(identifier->token.attribute.string, idStack.tokens[i].attribute.string);
             Symtable_insert(Symtable_stack_head(symtable_stack), identifier->token.attribute.string, identifier);
         }
         char argument[10];
         sprintf(argument, "%d", i + 1);
+        if (identifier->dataType[0] != function->dataType[param_pos]){
+            fprintf(stderr, "Function parameter %s of function %s does not have the same datatype as identifier %s\n",
+                    function->parameters[param_pos].identifier, function->token.attribute.string,
+                    idStack.tokens[i].attribute.string);
+            return SEMANTIC_ERROR_DATA_TYPE;
+        }
         generate_move("LF@", idStack.tokens[i].attribute.string, "TF@%retval", argument);
     }
     return OK;
@@ -808,7 +824,7 @@ int expression_or_function_call()
             CHECK_AND_CALL_FUNCTION(Func_param())
             // Fills expression_result_stack with parameter variables
             CHECK_AND_LOAD_TOKEN(TT_CLOSE_PARENTHESES);
-            function_call(function);
+            CHECK_AND_CALL_FUNCTION(function_call(function));
         }
         else
         {
@@ -1153,7 +1169,7 @@ int State_id()
         tokenStackTop(&idStack, &id_token);
         tokenStackPop(&idStack);
         Symtable_item *function = Symtable_search(global_symbol_table, id_token.attribute.string);
-        function_call(function);
+        CHECK_AND_CALL_FUNCTION(function_call(function));
 
         while (!tokenStackEmpty(&idStack))
         {
