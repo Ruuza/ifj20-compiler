@@ -1380,7 +1380,7 @@ int FirstBody()
     switch (token.token_type)
     {
     case TT_KEYWORD_FUNC:
-        // Rule: <body> -> <func> <body>
+        // Rule: <first_body> -> <func> <body>
         CHECK_AND_CALL_FUNCTION(Func());
 
         CHECK_AND_CALL_FUNCTION(Body())
