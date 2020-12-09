@@ -126,6 +126,7 @@ int Ret_types();
 int Params();
 int Func();
 int Body();
+int FirstBody();
 int Preamble();
 int Start();
 
@@ -1368,6 +1369,24 @@ int Func()
     return OK;
 }
 
+int FirstBody()
+{
+    switch (token.token_type)
+    {
+    case TT_KEYWORD_FUNC:
+        // Rule: <body> -> <func> <body>
+        CHECK_AND_CALL_FUNCTION(Func());
+
+        CHECK_AND_CALL_FUNCTION(Body())
+        return OK;
+        break;
+
+    default:
+        return SYNTAX_ERROR;
+        break;
+    }
+}
+
 int Body()
 {
     switch (token.token_type)
@@ -1434,7 +1453,7 @@ int Start()
     generate_header();
     tokenStackInit(&idStack);
 
-    CHECK_AND_CALL_FUNCTION(Body());
+    CHECK_AND_CALL_FUNCTION(FirstBody());
 
     return OK;
 }

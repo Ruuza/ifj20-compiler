@@ -1,5 +1,6 @@
-<start>     ->  <preamble> <body>
+<start>     ->  <preamble> <first_body>
 <preamble>  ->  package id
+<first_body> ->  <func> <body>
 <body>      ->  <func> <body>
 <body>      ->  EOF
 <func>      ->  func id ( <params> ) <ret_types> { <state_list> }
