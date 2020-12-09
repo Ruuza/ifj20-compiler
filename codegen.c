@@ -29,7 +29,6 @@ int generate_header() {
     fprintf(code_output_file, ".IFJcode20\n");
     fprintf(code_output_file, "JUMP $$main\n\n");
 
-    generate_print();
     char* id = "inputf";
     generate_builtin_function(id);
     id = "inputi";
