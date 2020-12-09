@@ -1504,6 +1504,108 @@ int insert_builtins()
     print->isfunction = true;
     strcpy(print->token.attribute.string, "print");
     Symtable_insert(&global_symbol_table, "print", print);
+
+    Symtable_item* inputs = create_item();
+    inputs->token.attribute.string = malloc(sizeof(char)*strlen("inputs")+1);
+    strcpy(inputs->token.attribute.string, "inputs");
+    inputs->isfunction = true;
+    inputs->parameter_count = 0;
+    inputs->return_values_count = 2;
+    inputs->dataType[0] = DT_STRING;
+    inputs->dataType[1] = DT_INT;
+    Symtable_insert(&global_symbol_table, "inputs", inputs);
+
+    Symtable_item* inputi = create_item();
+    inputi->token.attribute.string = malloc(sizeof(char)*strlen("inputi")+1);
+    strcpy(inputi->token.attribute.string, "inputi");
+    inputi->isfunction = true;
+    inputi->parameter_count = 0;
+    inputi->return_values_count = 2;
+    inputi->dataType[0] = DT_INT;
+    inputi->dataType[1] = DT_INT;
+    Symtable_insert(&global_symbol_table, "inputi", inputi);
+
+    Symtable_item* inputf = create_item();
+    inputf->token.attribute.string = malloc(sizeof(char)*strlen("inputf")+1);
+    strcpy(inputf->token.attribute.string, "inputf");
+    inputf->isfunction = true;
+    inputf->parameter_count = 0;
+    inputf->return_values_count = 2;
+    inputf->dataType[0] = DT_FLOAT;
+    inputf->dataType[1] = DT_INT;
+    Symtable_insert(&global_symbol_table, "inputf", inputf);
+
+    Symtable_item* int2float = create_item();
+    int2float->token.attribute.string = malloc(sizeof(char)*strlen("int2float")+1);
+    strcpy(int2float->token.attribute.string, "int2float");
+    int2float->isfunction = true;
+    int2float->parameter_count = 1;
+    int2float->return_values_count = 1;
+    int2float->parameters = malloc(sizeof(Parameter)*int2float->parameter_count);
+    int2float->parameters[0].dataType = DT_INT;
+    int2float->dataType[0] = DT_FLOAT;
+    Symtable_insert(&global_symbol_table, "int2float", int2float);
+
+    Symtable_item* float2int = create_item();
+    float2int->token.attribute.string = malloc(sizeof(char)*strlen("float2int")+1);
+    strcpy(float2int->token.attribute.string, "float2int");
+    float2int->isfunction = true;
+    float2int->parameter_count = 1;
+    float2int->return_values_count = 1;
+    float2int->parameters = malloc(sizeof(Parameter)*float2int->parameter_count);
+    float2int->parameters[0].dataType = DT_FLOAT;
+    float2int->dataType[0] = DT_INT;
+    Symtable_insert(&global_symbol_table, "float2int", float2int);
+
+    Symtable_item* len = create_item();
+    len->token.attribute.string = malloc(sizeof(char)*strlen("len")+1);
+    strcpy(len->token.attribute.string, "len");
+    len->isfunction = true;
+    len->parameter_count = 1;
+    len->return_values_count = 1;
+    len->parameters = malloc(sizeof(Parameter)*len->parameter_count);
+    len->parameters[0].dataType = DT_STRING;
+    len->dataType[0] = DT_INT;
+    Symtable_insert(&global_symbol_table, "len", len);
+
+    Symtable_item* substr = create_item();
+    substr->token.attribute.string = malloc(sizeof(char)*strlen("substr")+1);
+    strcpy(substr->token.attribute.string, "substr");
+    substr->isfunction = true;
+    substr->parameter_count = 3;
+    substr->return_values_count = 2;
+    substr->parameters = malloc(sizeof(Parameter)*substr->parameter_count);
+    substr->parameters[0].dataType = DT_STRING;
+    substr->parameters[1].dataType = DT_INT;
+    substr->parameters[2].dataType = DT_INT;
+    substr->dataType[0] = DT_STRING;
+    substr->dataType[1] = DT_INT;
+    Symtable_insert(&global_symbol_table, "substr", substr);
+
+    Symtable_item* ord = create_item();
+    ord->token.attribute.string = malloc(sizeof(char)*strlen("ord")+1);
+    strcpy(ord->token.attribute.string, "ord");
+    ord->isfunction = true;
+    ord->parameter_count = 2;
+    ord->return_values_count = 2;
+    ord->parameters = malloc(sizeof(Parameter)*ord->parameter_count);
+    ord->parameters[0].dataType = DT_STRING;
+    ord->parameters[1].dataType = DT_INT;
+    ord->dataType[0] = DT_INT;
+    ord->dataType[1] = DT_INT;
+    Symtable_insert(&global_symbol_table, "ord", ord);
+
+    Symtable_item *chr = create_item();
+    chr->token.attribute.string = malloc(sizeof(char)*strlen("chr")+1);
+    strcpy(chr->token.attribute.string, "chr");
+    chr->isfunction = true;
+    chr->parameter_count = 1;
+    chr->return_values_count = 2;
+    chr->parameters = malloc(sizeof(Parameter)*chr->parameter_count);
+    chr->parameters[0].dataType = DT_INT;
+    chr->dataType[0] = DT_STRING;
+    chr->dataType[1] = DT_INT;
+    Symtable_insert(&global_symbol_table, "chr", chr);
     return 0;
 }
 
