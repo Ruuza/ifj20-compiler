@@ -354,11 +354,17 @@ int parse_expression_binary_operation(Symstack *symstack, int operator_pos)
                                                                      right_item->token.attribute.string);
         break;
     case DT_INT:
+        if (operator_item->token.token_type == TT_SLASH && right_item->dataType[1] == DT_INT){
+            return SEMANTIC_ERROR_ZERO_DIV; // Very hacky way to detect zero division
+        }
         unsupported_operation = generate_arithmetic_operation_int(operator_item->token.token_type, nonterminal_identifier,
                                                                   left_item->token.attribute.string,
                                                                   right_item->token.attribute.string);
         break;
     case DT_FLOAT:
+        if (operator_item->token.token_type == TT_SLASH && right_item->dataType[1] == DT_INT){
+            return SEMANTIC_ERROR_ZERO_DIV; // Very hacky way to detect zero division
+        }
         unsupported_operation = generate_arithmetic_operation_float(operator_item->token.token_type, nonterminal_identifier,
                                                                     left_item->token.attribute.string,
                                                                     right_item->token.attribute.string);
@@ -453,6 +459,9 @@ int parse_literal(Symstack *symstack)
         literal->dataType[0] = DT_FLOAT;
         value_literal = malloc(sizeof(char) * 150);
         convert_double_to_literal(value_literal, literal->token.attribute.floating);
+        if (literal->token.attribute.floating == 0.0){ // Very hacky way to mark this variable as holding zero
+            literal->dataType[1] = DT_INT;
+        }
         generate_move("LF@", nonterminal_identifier, "", value_literal);
         break;
     case TT_STRING_LITERAl:
@@ -466,6 +475,9 @@ int parse_literal(Symstack *symstack)
         literal->dataType[0] = DT_INT;
         value_literal = malloc(sizeof(char) * 150);
         convert_int_to_literal(value_literal, literal->token.attribute.integer);
+        if (literal->token.attribute.floating == 0){ // Very hacky way to mark this variable as holding zero
+            literal->dataType[1] = DT_INT;
+        }
         generate_move("LF@", nonterminal_identifier, "", value_literal);
         break;
     default:
