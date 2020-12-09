@@ -1502,7 +1502,6 @@ int insert_builtins(){
     chr->dataType[0] = DT_STRING;
     chr->dataType[1] = DT_INT;
     Symtable_insert(&global_symbol_table, "chr", chr);
-
     return 0;
 }
 

@@ -30,7 +30,25 @@ int generate_header() {
     fprintf(code_output_file, "JUMP $$main\n\n");
 
     generate_print();
-    char* id = "chr";
+    char* id = "inputf";
+    generate_builtin_function(id);
+    id = "inputi";
+    generate_builtin_function(id);
+    id = "inputs";
+    generate_builtin_function(id);
+    id = "print";
+    generate_builtin_function(id);
+    id = "int2float";
+    generate_builtin_function(id);
+    id = "float2int";
+    generate_builtin_function(id);
+    id = "len";
+    generate_builtin_function(id);
+    id = "substr";
+    generate_builtin_function(id);
+    id = "ord";
+    generate_builtin_function(id);
+    id = "chr";
     generate_builtin_function(id);
     return 0;
 }
@@ -154,11 +172,11 @@ int generate_inputi() {
     fprintf(code_output_file, "READ LF@%s int\n", function_identifier);
     fprintf(code_output_file, "DEFVAR LF@helpertype\n");
     fprintf(code_output_file, "TYPE LF@helpertype LF@%s\n", function_identifier);
-    fprintf(code_output_file, "JUMPIFEQ $end LF@helpertype string@nil\n");
+    fprintf(code_output_file, "JUMPIFEQ $end_%s LF@helpertype string@nil\n", function_identifier);
     fprintf(code_output_file, "MOVE LF@%%retval1 LF@%s\n", function_identifier);
     fprintf(code_output_file, "POPFRAME\n");
     fprintf(code_output_file, "RETURN\n");
-    fprintf(code_output_file, "LABEL $end\n");
+    fprintf(code_output_file, "LABEL $end_%s\n", function_identifier);
     fprintf(code_output_file, "MOVE LF@%%retval2 int@1\n");
     fprintf(code_output_file, "POPFRAME\n");
     fprintf(code_output_file, "RETURN\n");
@@ -177,11 +195,11 @@ int generate_inputf() {
     fprintf(code_output_file, "READ LF@%s float\n", function_identifier);
     fprintf(code_output_file, "DEFVAR LF@helpertype\n");
     fprintf(code_output_file, "TYPE LF@helpertype LF@%s\n", function_identifier);
-    fprintf(code_output_file, "JUMPIFEQ $end LF@helpertype string@nil\n");
+    fprintf(code_output_file, "JUMPIFEQ $end_%s LF@helpertype string@nil\n", function_identifier);
     fprintf(code_output_file, "MOVE LF@%%retval1 LF@%s\n", function_identifier);
     fprintf(code_output_file, "POPFRAME\n");
     fprintf(code_output_file, "RETURN\n");
-    fprintf(code_output_file, "LABEL $end\n");
+    fprintf(code_output_file, "LABEL $end_%s\n", function_identifier);
     fprintf(code_output_file, "MOVE LF@%%retval2 int@1\n");
     fprintf(code_output_file, "POPFRAME\n");
     fprintf(code_output_file, "RETURN\n");
