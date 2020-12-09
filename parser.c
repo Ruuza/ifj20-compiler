@@ -1018,18 +1018,24 @@ int State()
     case TT_KEYWORD_RETURN:
         // Rule: <state> -> return <expr>
         CHECK_AND_LOAD_TOKEN(TT_KEYWORD_RETURN);
-
-        CHECK_AND_CALL_FUNCTION(Expresion())
-
-        CHECK_AND_CALL_FUNCTION(Expression_n())
-        if (token.token_type == TT_EOL)
+        // Rule: <state> -> return eps
+        if (!is_EOL)
         {
-            NEXT()
-            is_EOL = true;
+            CHECK_AND_CALL_FUNCTION(Expresion())
+
+            CHECK_AND_CALL_FUNCTION(Expression_n())
         }
-        else
+        if (!is_EOL)
         {
-            return SYNTAX_ERROR;
+            if (token.token_type == TT_EOL)
+            {
+                NEXT()
+                is_EOL = true;
+            }
+            else
+            {
+                return SYNTAX_ERROR;
+            }
         }
 
         if (current_function->return_values_count != expression_result_stack->top + 1)
