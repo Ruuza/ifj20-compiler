@@ -65,14 +65,14 @@ tTokenStack idStack;
         }                                   \
     }
 
-#define NEXT_WITH_EOL() \
-{                       \
-    next_token(&token); \
-    if (token.token_type == TT_ERR) \
-    {                   \
-        return LEXICAL_ERROR;       \
-    }                   \
-}                      \
+#define NEXT_WITH_EOL()                 \
+    {                                   \
+        next_token(&token);             \
+        if (token.token_type == TT_ERR) \
+        {                               \
+            return LEXICAL_ERROR;       \
+        }                               \
+    }
 
 // Compare actual token with TOK and then call and compare next token.
 #define CHECK_AND_LOAD_TOKEN(TOK)             \
@@ -173,7 +173,8 @@ int Id_n()
 
         CHECK_AND_LOAD_TOKEN(TT_COMMA);
 
-        if (token.token_type == TT_IDENTIFIER){
+        if (token.token_type == TT_IDENTIFIER)
+        {
             tokenStackPush(&idStack, token);
         }
         CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
@@ -296,17 +297,19 @@ int shift_position(Symstack *symstack)
     return -1;
 }
 
-bool is_compare_operator(Token_type operator){
-    switch(operator){
-        case TT_LESS:
-        case TT_LESS_OR_EQUALS:
-        case TT_EQUALS:
-        case TT_NOT_EQUALS:
-        case TT_GREATER:
-        case TT_GREATER_OR_EQUALS:
-            return true;
-        default:
-            return false;
+bool is_compare_operator(Token_type operator)
+{
+    switch (operator)
+    {
+    case TT_LESS:
+    case TT_LESS_OR_EQUALS:
+    case TT_EQUALS:
+    case TT_NOT_EQUALS:
+    case TT_GREATER:
+    case TT_GREATER_OR_EQUALS:
+        return true;
+    default:
+        return false;
     }
 }
 
@@ -324,37 +327,41 @@ int parse_expression_binary_operation(Symstack *symstack, int operator_pos)
     char *nonterminal_identifier = malloc(sizeof(char) * 20);
     sprintf(nonterminal_identifier, "expr-var%d", global_temporary_variable_counter++);
     generate_declaration("LF@", nonterminal_identifier);
-    if (left_item->dataType[0] != right_item->dataType[0]){
+    if (left_item->dataType[0] != right_item->dataType[0])
+    {
         fprintf(stderr, "%s does not have the same type as %s\n",
                 left_item->token.attribute.string, right_item->token.attribute.string);
         return SEMANTIC_ERROR_TYPE_COMPATIBILITY;
     }
     int unsupported_operation = 1;
-    switch (left_item->dataType[0]) {
-        case DT_VOID:
-            break;
-        case DT_STRING:
-            unsupported_operation = generate_arithmetic_operation_string(operator_item->token.token_type, nonterminal_identifier,
-                                                                         left_item->token.attribute.string,
-                                                                         right_item->token.attribute.string);
-            break;
-        case DT_INT:
-            unsupported_operation = generate_arithmetic_operation_int(operator_item->token.token_type, nonterminal_identifier,
-                                                                      left_item->token.attribute.string,
-                                                                      right_item->token.attribute.string);
-            break;
-        case DT_FLOAT:
-            unsupported_operation = generate_arithmetic_operation_float(operator_item->token.token_type, nonterminal_identifier,
-                                                                        left_item->token.attribute.string,
-                                                                        right_item->token.attribute.string);
-            break;
-        case DT_BOOL:
-            break;
+    switch (left_item->dataType[0])
+    {
+    case DT_VOID:
+        break;
+    case DT_STRING:
+        unsupported_operation = generate_arithmetic_operation_string(operator_item->token.token_type, nonterminal_identifier,
+                                                                     left_item->token.attribute.string,
+                                                                     right_item->token.attribute.string);
+        break;
+    case DT_INT:
+        unsupported_operation = generate_arithmetic_operation_int(operator_item->token.token_type, nonterminal_identifier,
+                                                                  left_item->token.attribute.string,
+                                                                  right_item->token.attribute.string);
+        break;
+    case DT_FLOAT:
+        unsupported_operation = generate_arithmetic_operation_float(operator_item->token.token_type, nonterminal_identifier,
+                                                                    left_item->token.attribute.string,
+                                                                    right_item->token.attribute.string);
+        break;
+    case DT_BOOL:
+        break;
     }
-    if (unsupported_operation){
+    if (unsupported_operation)
+    {
         return SEMANTIC_ERROR_TYPE_COMPATIBILITY;
     }
-    if (is_compare_operator(operator_item->token.token_type)){
+    if (is_compare_operator(operator_item->token.token_type))
+    {
         left_item->dataType[0] = DT_BOOL;
     }
     free(left_item->token.attribute.string);
@@ -486,8 +493,9 @@ int parse_expression_id(Symstack *symstack)
     char *local_name =
         malloc(sizeof(char) * strlen(identifier->token.attribute.string) + 1);
     strcpy(local_name, identifier->token.attribute.string);
-    Symtable_item* variable = Symtable_stack_lookup(symtable_stack, local_name);
-    if (variable == NULL){
+    Symtable_item *variable = Symtable_stack_lookup(symtable_stack, local_name);
+    if (variable == NULL)
+    {
         return SEMANTIC_ERROR_UNDEFINED_VARIABLE;
     }
     identifier->dataType[0] = variable->dataType[0];
@@ -612,9 +620,12 @@ int Expresion()
         {
         case PRECEDENCE_E:
             Symstack_insert(symstack, b);
-            if (token.token_type == TT_OPEN_PARENTHESES){
+            if (token.token_type == TT_OPEN_PARENTHESES)
+            {
                 parentheses_depth++;
-            } else if (token.token_type == TT_CLOSE_PARENTHESES){
+            }
+            else if (token.token_type == TT_CLOSE_PARENTHESES)
+            {
                 parentheses_depth--;
             }
             if (!end_found)
@@ -625,9 +636,12 @@ int Expresion()
         case PRECEDENCE_L:
             insert_shift(symstack, a);
             Symstack_insert(symstack, b);
-            if (token.token_type == TT_OPEN_PARENTHESES){
+            if (token.token_type == TT_OPEN_PARENTHESES)
+            {
                 parentheses_depth++;
-            } else if (token.token_type == TT_CLOSE_PARENTHESES){
+            }
+            else if (token.token_type == TT_CLOSE_PARENTHESES)
+            {
                 parentheses_depth--;
             }
             if (!end_found)
@@ -681,21 +695,27 @@ int Expression_n()
     return OK;
 }
 
-void function_call(Symtable_item* function){
+void function_call(Symtable_item *function)
+{
     generate_frame();
-    if (strcmp(function->token.attribute.string, "print") == 0){
+    if (strcmp(function->token.attribute.string, "print") == 0)
+    {
         // print takes arguments from stack
         char arg_count[10];
-        sprintf(arg_count, "%d", expression_result_stack->top+1);
+        sprintf(arg_count, "%d", expression_result_stack->top + 1);
         generate_declaration("TF@", "%1");
         generate_move("TF@", "%1", "int@", arg_count);
-        for (int i = expression_result_stack->top; i >= 0; i--) {
+        for (int i = expression_result_stack->top; i >= 0; i--)
+        {
             generate_push("LF@", expression_result_stack->stack[i]->token.attribute.string);
         }
-    } else {
-        for (int i = 0; i <= expression_result_stack->top; ++i) {
+    }
+    else
+    {
+        for (int i = 0; i <= expression_result_stack->top; ++i)
+        {
             char argument[10];
-            sprintf(argument, "%%%d", i+1);
+            sprintf(argument, "%%%d", i + 1);
             generate_declaration("TF@", argument);
             generate_move("TF@", argument, "LF@", expression_result_stack->stack[i]->token.attribute.string);
         }
@@ -704,24 +724,28 @@ void function_call(Symtable_item* function){
     Symstack_init(&expression_result_stack);
     generate_function_call(function->token.attribute.string);
     // Create objecct with called function name and store in expression result
-    Symtable_item* function_result = create_item_copy(function);
+    Symtable_item *function_result = create_item_copy(function);
     Symstack_insert(expression_result_stack, function_result);
 }
 
-int function_call_return(Symtable_item* function) {
-    if (function == NULL){
+int function_call_return(Symtable_item *function)
+{
+    if (function == NULL)
+    {
         return SEMANTIC_ERROR_FUNCTION;
     }
-    for (int i = 0; i < function->parameter_count; i++) {
+    for (int i = 0; i < function->parameter_count; i++)
+    {
         Symtable_item *identifier = Symtable_search(*Symtable_stack_head(symtable_stack), idStack.tokens[i].attribute.string);
-        if (identifier != NULL) {
+        if (identifier != NULL)
+        {
             return SEMANTIC_ERROR_UNDEFINED_VARIABLE; //REDEFINED
         }
         generate_declaration("LF@", idStack.tokens[i].attribute.string);
         identifier = create_item();
         identifier->token.token_type = TT_IDENTIFIER;
         identifier->token.attribute.string = malloc(
-                sizeof(char) * strlen(idStack.tokens[i].attribute.string) + 1);
+            sizeof(char) * strlen(idStack.tokens[i].attribute.string) + 1);
         identifier->dataType[0] = function->parameters[i].dataType;
         strcpy(identifier->token.attribute.string, idStack.tokens[i].attribute.string);
         Symtable_insert(Symtable_stack_head(symtable_stack), identifier->token.attribute.string, identifier);
@@ -734,10 +758,13 @@ int function_call_return(Symtable_item* function) {
     return OK;
 }
 
-int expression_or_function_call(){
-    if (token.token_type == TT_IDENTIFIER){
-        Symtable_item* function = Symtable_search(global_symbol_table, token.attribute.string);
-        if (function != NULL){
+int expression_or_function_call()
+{
+    if (token.token_type == TT_IDENTIFIER)
+    {
+        Symtable_item *function = Symtable_search(global_symbol_table, token.attribute.string);
+        if (function != NULL)
+        {
             // Is function. Call move parameters to temporary frame and call it.
             CHECK_AND_LOAD_TOKEN(TT_IDENTIFIER);
             CHECK_AND_LOAD_TOKEN(TT_OPEN_PARENTHESES)
@@ -745,43 +772,56 @@ int expression_or_function_call(){
             // Fills expression_result_stack with parameter variables
             CHECK_AND_LOAD_TOKEN(TT_CLOSE_PARENTHESES);
             function_call(function);
-        } else {
+        }
+        else
+        {
             // Variable not a function
             CHECK_AND_CALL_FUNCTION(Expresion())
         }
-    } else {
+    }
+    else
+    {
         // Likely a literal value or error
         CHECK_AND_CALL_FUNCTION(Expresion())
     }
 
-    if (token.token_type == TT_EOL){
+    if (token.token_type == TT_EOL)
+    {
         // EOL token ends expression
         NEXT()
         is_EOL = true;
     }
-    if (!is_EOL){
+    if (!is_EOL)
+    {
         CHECK_AND_CALL_FUNCTION(Expression_n())
     }
     return OK;
 }
 
-int move_return_values_from_function(bool declaration_forbidden){
+int move_return_values_from_function(bool declaration_forbidden)
+{
     int lvalue_counter = 0;
-    for (int i = 0; i <= expression_result_stack->top; ++i) {
-        if (expression_result_stack->stack[i]->isfunction){
+    for (int i = 0; i <= expression_result_stack->top; ++i)
+    {
+        if (expression_result_stack->stack[i]->isfunction)
+        {
             // Obtain full global function item from "reference"
             Symtable_item *called_function = Symtable_search(global_symbol_table, expression_result_stack->stack[i]->token.attribute.string);
             CHECK_AND_CALL_FUNCTION(function_call_return(called_function))
-        } else {
-            Symtable_item* identifier = Symtable_stack_lookup(symtable_stack, idStack.tokens[lvalue_counter].attribute.string);
-            if (identifier == NULL){
-                if (declaration_forbidden){
+        }
+        else
+        {
+            Symtable_item *identifier = Symtable_stack_lookup(symtable_stack, idStack.tokens[lvalue_counter].attribute.string);
+            if (identifier == NULL)
+            {
+                if (declaration_forbidden)
+                {
                     return SEMANTIC_ERROR_UNDEFINED_VARIABLE;
                 }
                 generate_declaration("LF@", idStack.tokens[lvalue_counter].attribute.string);
                 identifier = create_item();
                 identifier->token.token_type = TT_IDENTIFIER;
-                identifier->token.attribute.string = malloc(sizeof(char)*strlen(idStack.tokens[lvalue_counter].attribute.string)+1);
+                identifier->token.attribute.string = malloc(sizeof(char) * strlen(idStack.tokens[lvalue_counter].attribute.string) + 1);
                 identifier->dataType[0] = expression_result_stack->stack[i]->dataType[0];
                 strcpy(identifier->token.attribute.string, idStack.tokens[lvalue_counter].attribute.string);
                 Symtable_insert(Symtable_stack_head(symtable_stack), identifier->token.attribute.string, identifier);
@@ -791,7 +831,8 @@ int move_return_values_from_function(bool declaration_forbidden){
         }
     }
 
-    while (!tokenStackEmpty(&idStack)){
+    while (!tokenStackEmpty(&idStack))
+    {
         tokenStackPop(&idStack);
     }
     Symstack_dispose(&expression_result_stack);
@@ -799,7 +840,8 @@ int move_return_values_from_function(bool declaration_forbidden){
     return OK;
 }
 
-int Declr() {
+int Declr()
+{
     // Rule: <declr> -> := <expr>
     CHECK_AND_LOAD_TOKEN(TT_DECLARATION_ASSIGNMENT)
 
@@ -914,12 +956,13 @@ int State()
 
         CHECK_AND_CALL_FUNCTION(Expresion())
         int if_number = ++control_flow_counter;
-        Symtable_item* expression_result = Symstack_pop(expression_result_stack);
-        if (expression_result->dataType[0] != DT_BOOL){
+        Symtable_item *expression_result = Symstack_pop(expression_result_stack);
+        if (expression_result->dataType[0] != DT_BOOL)
+        {
             fprintf(stderr, "If did not get expression result of type bool\n");
             return SEMANTIC_ERROR_TYPE_COMPATIBILITY;
         }
-        char* expresion_result = expression_result->token.attribute.string;
+        char *expresion_result = expression_result->token.attribute.string;
         generate_if_head(expresion_result, if_number);
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
@@ -947,15 +990,15 @@ int State()
         CHECK_AND_CALL_FUNCTION(For_declr());
 
         CHECK_AND_CALL_FUNCTION(Expresion());
-        Symtable_item* helper_for_expr1 = Symstack_pop(expression_result_stack);
-        char* expresion1_result_for = helper_for_expr1->token.attribute.string;
+        Symtable_item *helper_for_expr1 = Symstack_pop(expression_result_stack);
+        char *expresion1_result_for = helper_for_expr1->token.attribute.string;
         //generate_for_head(expresion1_result_for, local_counter_for);
 
         CHECK_AND_LOAD_TOKEN(TT_SEMICOLON);
 
         CHECK_AND_CALL_FUNCTION(Expresion());
-        Symtable_item* helper_for_expr2 = Symstack_pop(expression_result_stack);
-        char* expresion2_result_for = helper_for_expr2->token.attribute.string;
+        Symtable_item *helper_for_expr2 = Symstack_pop(expression_result_stack);
+        char *expresion2_result_for = helper_for_expr2->token.attribute.string;
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
         Symtable_stack_insert(symtable_stack, localtab_if_for);
@@ -978,10 +1021,13 @@ int State()
         CHECK_AND_CALL_FUNCTION(Expresion())
 
         CHECK_AND_CALL_FUNCTION(Expression_n())
-        if (token.token_type == TT_EOL){
+        if (token.token_type == TT_EOL)
+        {
             NEXT()
             is_EOL = true;
-        } else {
+        }
+        else
+        {
             return SYNTAX_ERROR;
         }
 
@@ -1015,14 +1061,18 @@ int State()
     return OK;
 }
 
-int State_id(){
+int State_id()
+{
     CHECK_AND_CALL_FUNCTION(Id_n())
-    if (token.token_type == TT_DECLARATION_ASSIGNMENT) {
+    if (token.token_type == TT_DECLARATION_ASSIGNMENT)
+    {
         // Rule: <state_id> -> <Id_n> := <declr>
 
         CHECK_AND_CALL_FUNCTION(Declr())
         return OK;
-    } else if (token.token_type == TT_ASSIGNMENT) {
+    }
+    else if (token.token_type == TT_ASSIGNMENT)
+    {
         // Rule: <state_id> -> <Id_n> = <expr>
 
         CHECK_AND_LOAD_TOKEN(TT_ASSIGNMENT)
@@ -1030,9 +1080,12 @@ int State_id(){
         CHECK_AND_CALL_FUNCTION(move_return_values_from_function(true))
 
         return OK;
-    } else if (token.token_type == TT_OPEN_PARENTHESES) {
+    }
+    else if (token.token_type == TT_OPEN_PARENTHESES)
+    {
         // Rule: <state_id> -> ( <func_param> )
-        if (idStack.top != 0){
+        if (idStack.top != 0)
+        {
             return SYNTAX_ERROR;
             // Function call in lvalue
             // eg: id, call() :=
@@ -1043,7 +1096,7 @@ int State_id(){
         Token id_token;
         tokenStackTop(&idStack, &id_token);
         tokenStackPop(&idStack);
-        Symtable_item* function = Symtable_search(global_symbol_table, id_token.attribute.string);
+        Symtable_item *function = Symtable_search(global_symbol_table, id_token.attribute.string);
         function_call(function);
 
         return OK;
@@ -1254,13 +1307,16 @@ int Func()
     Symtable_stack_insert(symtable_stack, func);
 
     char *function_identifier;
-    if (token.token_type == TT_IDENTIFIER){
+    if (token.token_type == TT_IDENTIFIER)
+    {
         function_identifier = malloc(sizeof(*token.attribute.string) * strlen(token.attribute.string) + 1);
         current_function = Symtable_search(global_symbol_table, token.attribute.string);
         strcpy(function_identifier, token.attribute.string);
         generate_func_top(token.attribute.string);
         generate_return_values(current_function);
-    } else {
+    }
+    else
+    {
         return SYNTAX_ERROR;
     }
     NEXT()
@@ -1272,13 +1328,14 @@ int Func()
     CHECK_AND_CALL_FUNCTION(Params());
 
     // Fill function scope with parameters
-    for (int i = 0; i < current_function->parameter_count; ++i) {
-        Symtable_item* param = create_item();
+    for (int i = 0; i < current_function->parameter_count; ++i)
+    {
+        Symtable_item *param = create_item();
         param->token.token_type = TT_IDENTIFIER;
         param->dataType[0] = current_function->parameters[i].dataType;
-        param->token.attribute.string = malloc(sizeof(char)*(strlen(current_function->parameters[i].identifier)+1));
+        param->token.attribute.string = malloc(sizeof(char) * (strlen(current_function->parameters[i].identifier) + 1));
         strcpy(param->token.attribute.string, current_function->parameters[i].identifier);
-        Symtable_node_ptr* head = Symtable_stack_head(symtable_stack);
+        Symtable_node_ptr *head = Symtable_stack_head(symtable_stack);
         Symtable_insert(head, param->token.attribute.string, param);
     }
 
@@ -1343,13 +1400,16 @@ int Preamble()
 
     EOL_allowed = true;
 
-    if (token.token_type == TT_IDENTIFIER){
+    if (token.token_type == TT_IDENTIFIER)
+    {
         char *package_id_name = "main";
         if (strcmp(token.attribute.string, package_id_name) != 0)
         {
             return SEMANTIC_ERROR_OTHERS;
         }
-    } else {
+    }
+    else
+    {
         return SYNTAX_ERROR;
     }
     NEXT()
@@ -1394,9 +1454,10 @@ int fill_function_table()
     return OK;
 }
 
-int insert_builtins(){
-    Symtable_item* print = create_item();
-    print->token.attribute.string = malloc(sizeof(char)*strlen("print")+1);
+int insert_builtins()
+{
+    Symtable_item *print = create_item();
+    print->token.attribute.string = malloc(sizeof(char) * strlen("print") + 1);
     print->isfunction = true;
     strcpy(print->token.attribute.string, "print");
     Symtable_insert(&global_symbol_table, "print", print);
@@ -1412,11 +1473,14 @@ int fast_func()
     EOL_allowed = false;
 
     CHECK_AND_LOAD_TOKEN(TT_KEYWORD_FUNC);
-    if (token.token_type == TT_IDENTIFIER){
+    if (token.token_type == TT_IDENTIFIER)
+    {
         function_name = malloc(sizeof(*token.attribute.string) * strlen(token.attribute.string) + 1);
         strcpy(function_name, token.attribute.string);
         function->token.attribute.string = function_name;
-    } else {
+    }
+    else
+    {
         return SYNTAX_ERROR;
     }
     NEXT()
@@ -1480,7 +1544,8 @@ int fast_params(Symtable_item *function)
 int fast_param(Symtable_item *function)
 {
     // Rule: <param> -> id <data_type>
-    if (token.token_type == TT_IDENTIFIER){
+    if (token.token_type == TT_IDENTIFIER)
+    {
         function->parameter_count++;
         if (function->parameters == NULL)
         {
@@ -1492,7 +1557,9 @@ int fast_param(Symtable_item *function)
         }
         function->parameters[function->parameter_count - 1].identifier = malloc(sizeof(*token.attribute.string) * strlen(token.attribute.string) + 1);
         strcpy(function->parameters[function->parameter_count - 1].identifier, token.attribute.string);
-    } else {
+    }
+    else
+    {
         return SYNTAX_ERROR;
     }
     NEXT()
