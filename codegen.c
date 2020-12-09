@@ -547,7 +547,7 @@ int generate_arithmetic_operation_float(Token_type operation, char* result, char
 }
 
 int generate_if_head(char* compare_variable, int number){
-    fprintf(code_output_file, "JUMPIFEQ $$IF_FALSE%d %s bool@false\n", number, compare_variable);
+    fprintf(code_output_file, "JUMPIFEQ $$IF_FALSE%d LF@%s bool@false\n", number, compare_variable);
     fprintf(code_output_file, "# True%d\n", number);
     return 0;
 }
