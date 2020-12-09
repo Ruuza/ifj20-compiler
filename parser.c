@@ -500,6 +500,11 @@ int parse_expression_id(Symstack *symstack)
     Symtable_item *shift = Symstack_pop(symstack);
     identifier->token.token_type = TT_NONTERMINAL;
 
+    if (strcmp(identifier->token.attribute.string, "_") == 0){
+        fprintf(stderr, "Error attempting to read from _");
+        return SEMANTIC_ERROR_OTHERS;
+    }
+
     char *local_name =
         malloc(sizeof(char) * strlen(identifier->token.attribute.string) + 1);
     strcpy(local_name, identifier->token.attribute.string);
@@ -749,6 +754,9 @@ int function_call_return(Symtable_item* function, bool declaration_forbidden, in
             return SEMANTIC_ERROR_FUNCTION;
         }
         Symtable_item *identifier = Symtable_search(*Symtable_stack_head(symtable_stack), idStack.tokens[i].attribute.string);
+        if (strcmp(idStack.tokens[i].attribute.string, "_") == 0){
+            continue;
+        }
         if (declaration_forbidden) {
             // Assignment
             if (identifier == NULL){
@@ -828,6 +836,9 @@ int move_return_values_from_function(bool declaration_forbidden){
             CHECK_AND_CALL_FUNCTION(function_call_return(called_function, declaration_forbidden, id_counter))
             id_counter += called_function->return_values_count-1;
         } else {
+            if (strcmp(idStack.tokens[id_counter].attribute.string, "_") == 0){
+                continue;
+            }
             Symtable_item* identifier = Symtable_stack_lookup(symtable_stack, idStack.tokens[id_counter].attribute.string);
             if (identifier == NULL){
                 if (declaration_forbidden){
