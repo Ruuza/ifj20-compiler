@@ -11,4 +11,4 @@ clean:
 run:
 	./build/ifj20c
 package: all
-	zip xruzan00.zip *.c *.h Makefile CMakeLists.txt
+	zip xruzan00.zip *.c *.h Makefile CMakeLists.txt rozdeleni dokumentace.pdf
