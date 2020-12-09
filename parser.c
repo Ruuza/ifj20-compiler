@@ -220,6 +220,15 @@ int Else()
         Symtable_init(&localtab_else);
         Symtable_stack_insert(symtable_stack, localtab_else);
 
+        if (is_EOL)
+        {
+            is_EOL = false;
+        }
+        else
+        {
+            return SYNTAX_ERROR;
+        }
+
         CHECK_AND_CALL_FUNCTION(Stat_list());
 
         CHECK_AND_LOAD_TOKEN(TT_CLOSE_BRACES);
@@ -968,6 +977,15 @@ int State()
 
         CHECK_AND_LOAD_TOKEN(TT_OPEN_BRACES);
         Symtable_stack_insert(symtable_stack, localtab_if_for);
+
+        if (is_EOL)
+        {
+            is_EOL = false;
+        }
+        else
+        {
+            return SYNTAX_ERROR;
+        }
 
         CHECK_AND_CALL_FUNCTION(Stat_list());
 
