@@ -820,7 +820,7 @@ int move_return_values_from_function(bool declaration_forbidden){
     for (int id_counter = 0; id_counter <= idStack.top || rvalue_counter <= expression_result_stack->top; ++id_counter, ++rvalue_counter) {
         if (id_counter > idStack.top ||  rvalue_counter > expression_result_stack->top){
             fprintf(stderr, "Number of values on left side of an assignment does not match number of values on right side");
-            return SEMANTIC_ERROR_UNDEFINED_VARIABLE;
+            return SEMANTIC_ERROR_OTHERS;
         }
         if (expression_result_stack->stack[rvalue_counter]->isfunction){
             // Obtain full global function item from "reference"
